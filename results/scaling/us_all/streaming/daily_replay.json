@@ -1,0 +1,63 @@
+{
+  "run": "daily",
+  "model": "ensemble",
+  "weights": {
+    "baseline_zscore_rule": 0.7,
+    "lstm_autoencoder": 0.3
+  },
+  "threshold": 0.9881905330675136,
+  "split": "test",
+  "period": [
+    "2024-07-01",
+    "2026-09-30"
+  ],
+  "trading_days": 565,
+  "tickers": 4304,
+  "bars_timed": 2431744,
+  "bars_scored": 2429211,
+  "alarms": 36316,
+  "replay_wall_seconds_incl_warmup": 1056.4,
+  "deployed_latency_us": {
+    "p50_us": 329.1,
+    "p95_us": 383.9,
+    "p99_us": 508.4,
+    "mean_us": 323.9
+  },
+  "throughput_bars_per_second_deployed": 3087.0,
+  "batch_vs_stream": {
+    "rows_compared": 2429211,
+    "rows_missing_in_stream": 0,
+    "max_abs_score_difference": 2.073982709915878e-05,
+    "alarm_disagreements": 0
+  },
+  "metrics": {
+    "synthetic": {
+      "pr_auc": 0.256583509924691,
+      "precision": 0.48018212317277736,
+      "recall": 0.27460600246676714,
+      "f1": 0.3493984306887532,
+      "event_recall": 0.7509022611769905,
+      "mean_delay_bars": 0.03933300637567435,
+      "median_delay_bars": 0.0,
+      "events": 13577,
+      "false_alarms": 10846,
+      "false_alarms_per_day_all_tickers": 19.19646017699115,
+      "false_alarms_per_ticker_day": 0.004464824175421567,
+      "false_alarms_per_ticker_month": 0.0937613076838529
+    },
+    "real": {
+      "pr_auc": 0.7020644678340237,
+      "precision": 0.5463822668339607,
+      "recall": 0.7646921095762117,
+      "f1": 0.6373615651070889,
+      "event_recall": 0.7665652072114258,
+      "mean_delay_bars": 0.004581551618814905,
+      "median_delay_bars": 0.0,
+      "events": 17084,
+      "false_alarms": 10846,
+      "false_alarms_per_day_all_tickers": 19.19646017699115,
+      "false_alarms_per_ticker_day": 0.004464824175421567,
+      "false_alarms_per_ticker_month": 0.0937613076838529
+    }
+  }
+}

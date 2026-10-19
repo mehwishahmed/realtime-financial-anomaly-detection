@@ -1,0 +1,7 @@
+run,stage,bars,mean_us,p50_us,p95_us,p99_us,max_us
+daily,features,2429211,27.1,27.17,35.92,46.42,130333.12
+daily,baseline_zscore_rule,2429211,2.2,2.25,2.71,3.79,736.25
+daily,lstm_autoencoder,2429211,273.72,278.58,322.38,423.29,712595.29
+daily,combine,2429211,20.89,21.12,25.71,34.75,108392.46
+daily,deployed_total,2429211,323.91,329.08,383.92,508.41,712765.33
+daily,all_members_total,2429211,323.91,329.08,383.92,508.41,712765.33

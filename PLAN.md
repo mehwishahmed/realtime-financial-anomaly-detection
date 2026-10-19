@@ -111,14 +111,8 @@ After each phase: run it, show the output, explain it in plain English, write te
 
 
 ## Progress (last updated 2026-10-19)
-**Done:** Phases 1-6. Phase 7 is in progress. 88 tests pass.
+**Done: all phases (0-7).** 88 tests pass. `make all` reruns the main pipeline; `make scale-100|scale-sp500|scale-us-all` run the scaling study.
 
-**Phase 7 so far:**
-- `make all` (main pipeline end to end), config `extends:` for scale configs, a shared download cache (`paths.raw_data_dir`), chunked deep-model scoring, a seeded cap on LSTM training windows, docstrings and type hints throughout.
-- README restructured: architecture (Mermaid), `make all`, results, streaming, Scaling (generated table), Limitations, Future work.
-- Scaling runs (`scripts/run_scaling.py`, `configs/scale_*.yaml`, results in `results/scaling/`):
-  - 100 stocks: complete. It reproduces the main results exactly (weights 0.9/0.1, PR-AUC 0.320/0.735, 0.096 FA per ticker-month); 3.1 min, 1.3 GB peak.
-  - S&P 500: complete. 492 of 503 stocks handled, 1.39M bars, 13.6 min, 3.4 GB peak, p50 210 µs, 0.081 FA per ticker-month.
-  - All US-listed: running. Download done (5,367 new, 31 failed, 24 min); 4,304 of 5,900 passed cleaning (10.5M bars).
+**Scaling outcome (results/scaling/, generated README table):** 100 → 492 → 4,304 stocks handled; 3.1 → 13.6 → 98.4 min of active compute; peak memory 1.3 → 3.4 → 6.4 GB; latency p50 205 → 210 → 329 µs; false alarms per ticker-month 0.096 → 0.081 → 0.094 (per day across all tickers 0.46 → 1.89 → 19.2). The ensemble beats the z-score rule on both tracks at every scale. The laptop slept during the all-US run (timings are active compute; wall clock ~2 h 47 min).
 
-**Next:** let the all-US run finish (or stop and report), then `make results-table` to fill the README scaling table and write the scaling notes from the numbers. Final test run, commit, push.
+**Possible follow-ups:** fill in the two placeholder notebooks; intraday models on longer data; regime-aware thresholds; investigate why latency rises at full-US scale.
