@@ -124,11 +124,26 @@ class IsolationForestConfig:
 
 
 @dataclass(frozen=True)
+class DeepConfig:
+    feature_set: str
+    window: int
+    holdout_frac: float
+    batch_size: int
+    max_epochs: int
+    patience: int
+    learning_rate: float
+    torch_threads: int
+    lstm_autoencoder: dict[str, Any]
+    transformer: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class ModelsConfig:
     feature_sets: dict[str, tuple[str, ...]]
     scaling: Literal["per_ticker", "global"]
     min_train_rows_per_ticker: int
     isolation_forest: IsolationForestConfig
+    deep: DeepConfig | None = None
 
 
 @dataclass(frozen=True)
@@ -312,12 +327,40 @@ def _parse_models(raw: dict[str, Any]) -> ModelsConfig:
         max_features=float(f.get("max_features", 1.0)),
         n_jobs=int(f.get("n_jobs", -1)),
     )
+    deep = _parse_deep(raw["deep"], sets) if "deep" in raw else None
     return ModelsConfig(
         feature_sets=sets,
         scaling=scaling,
         min_train_rows_per_ticker=int(_require(raw, "min_train_rows_per_ticker", "models")),
         isolation_forest=iforest,
+        deep=deep,
     )
+
+
+def _parse_deep(raw: dict[str, Any], sets: dict[str, tuple[str, ...]]) -> DeepConfig:
+    w = "models.deep"
+    deep = DeepConfig(
+        feature_set=str(_require(raw, "feature_set", w)),
+        window=int(_require(raw, "window", w)),
+        holdout_frac=float(_require(raw, "holdout_frac", w)),
+        batch_size=int(_require(raw, "batch_size", w)),
+        max_epochs=int(_require(raw, "max_epochs", w)),
+        patience=int(_require(raw, "patience", w)),
+        learning_rate=float(_require(raw, "learning_rate", w)),
+        torch_threads=int(raw.get("torch_threads", 4)),
+        lstm_autoencoder=dict(_require(raw, "lstm_autoencoder", w)),
+        transformer=dict(_require(raw, "transformer", w)),
+    )
+    if deep.feature_set not in sets:
+        raise ConfigError(f"{w}.feature_set '{deep.feature_set}' is not one of {sorted(sets)}")
+    if deep.window < 3 or not 0 < deep.holdout_frac < 0.5:
+        raise ConfigError(f"{w}.window must be >= 3 and holdout_frac between 0 and 0.5")
+    if min(deep.batch_size, deep.max_epochs, deep.patience) < 1 or deep.learning_rate <= 0:
+        raise ConfigError(f"{w}: batch_size, max_epochs, patience must be >= 1 and learning_rate > 0")
+    t = deep.transformer
+    if int(t.get("d_model", 0)) % int(t.get("n_heads", 1)) != 0:
+        raise ConfigError(f"{w}.transformer.d_model must be divisible by n_heads")
+    return deep
 
 
 def _pair(value: Any, where: str, cast: type = float) -> tuple[Any, Any]:

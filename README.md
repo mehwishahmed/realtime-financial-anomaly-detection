@@ -33,6 +33,7 @@ All settings are in [`configs/default.yaml`](configs/default.yaml). Change `univ
 | `make labels` | Tag real events (earnings shocks, large moves), inject synthetic anomalies into val/test, write `results/labels/` |
 | `make baselines` | Sanity-check the evaluator with a random scorer and a simple z-score rule, write `results/metrics/` |
 | `make iforest` | Phase 3: grid-search Isolation Forest on validation, report on test, write `results/models/` and `results/metrics/` |
+| `make deep` | Phase 4: train the LSTM autoencoder and Transformer forecaster on CPU, save training curves to `results/charts/`, evaluate |
 | `make test` | Run the test suite |
 
 ## How results are measured

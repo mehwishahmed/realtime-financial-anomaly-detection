@@ -4,7 +4,7 @@ CONFIG ?= configs/default.yaml
 FREQ ?= all
 export PYTHONPATH := src
 
-.PHONY: universe data features phase1 labels baselines phase2 iforest test
+.PHONY: universe data features phase1 labels baselines phase2 iforest deep test
 
 universe:   ## Refresh configs/tickers/sp500.csv and us_all.csv
 	$(PY) scripts/build_universe.py --config $(CONFIG) --which both
@@ -30,3 +30,6 @@ phase2: labels baselines
 
 iforest:    ## Phase 3: tune Isolation Forest on val, report on test
 	$(PY) scripts/train_iforest.py --config $(CONFIG)
+
+deep:       ## Phase 4: train the LSTM autoencoder and Transformer, save curves, evaluate
+	$(PY) scripts/train_deep.py --config $(CONFIG) --model all

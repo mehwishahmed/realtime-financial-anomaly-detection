@@ -1,0 +1,28 @@
+{
+  "model": "lstm_autoencoder",
+  "features": [
+    "log_ret",
+    "vol_20",
+    "volume_z",
+    "gap",
+    "corr_market",
+    "ret_z",
+    "gap_z"
+  ],
+  "window": 20,
+  "architecture": {
+    "hidden_size": 32,
+    "num_layers": 1
+  },
+  "parameters": 13927,
+  "train_windows": 168054,
+  "holdout_windows": 19206,
+  "epochs_run": 100,
+  "best_epoch": 98,
+  "best_holdout_loss": 0.382597,
+  "fit_seconds": 388.5,
+  "score_seconds_all_rows": 2.6,
+  "rows_scored": 281091,
+  "torch_threads": 4,
+  "seed": 42
+}

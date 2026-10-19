@@ -91,6 +91,8 @@ After each phase: run it, show the output, explain it in plain English, write te
 - Thresholds are tuned for best F1 on val/synthetic. Models are compared mainly on PR-AUC, and event recall is always read alongside false alarms per day.
 - False alarms are reported three ways: per day across all tickers, per ticker-day, and per ticker per month (the last one is comparable across universe sizes).
 - Model inputs are standardized per ticker using train-split statistics only. Tickers with fewer than 250 train rows use global statistics.
+- Deep models early-stop on the last 10% of TRAIN dates, never on val (val has injected anomalies).
+- The LSTM's first run hit the 30-epoch cap while its holdout loss was still falling (test PR-AUC 0.207 / 0.196). The cap was raised to 100 based on the training curve alone; the rerun is the reported result.
 - Isolation Forest settings were chosen by val PR-AUC. After seeing its test results we deliberately did NOT add new feature sets, because that would tune on test.
 
 ## Notes for the README's Limitations section
@@ -98,12 +100,18 @@ After each phase: run it, show the output, explain it in plain English, write te
 - Intraday data is a ~60-day snapshot that depends on the download date (fetch dates are saved in `data/raw/intraday/_manifest.csv`).
 - `large_move` real events are defined by |return| / volatility, the same quantity some features measure, so detecting them is partly circular. `earnings_shock` is the fairer real-world test.
 - Isolation Forest scores saturate beyond the training range (a 100-sigma move scores the same as a ~3-sigma one), so it misses most one-feature anomalies such as volume bursts.
+- The LSTM autoencoder partly reconstructs large moves (it rebuilds ~78% of a big ret_z at the scored bar), so it under-scores price shocks.
 - Event recall can be inflated by alarming constantly (the random baseline gets ~0.89 event recall at ~34 false alarms per day), so it's only meaningful next to the false-alarm rate.
 
 
 ## Progress (last updated 2026-10-19)
-**Done:** Step 0, Phase 1 (data), Phase 2 (labels and evaluator), the false-alarm metric clarification, and Phase 3 (Isolation Forest). 57 tests pass.
+**Done:** Step 0, Phases 1-3, the false-alarm metric clarification, and a first full pass of Phase 4 (both deep models trained and evaluated, curves in `results/charts/`). 65 tests pass.
 
-**Phase 3 result (test, 100 tickers):** Isolation Forest PR-AUC is 0.218 synthetic / 0.714 real, vs. the z-score rule's 0.303 / 0.654, with 0.44 vs. 0.11 false alarms per ticker per month. On val it catches 100% of price spikes and level shifts but only 21% of volume bursts, because its scores saturate beyond the training range and one-feature anomalies get diluted.
+**Phase 4 results so far (test, 100 tickers; PR-AUC synthetic / real; false alarms per ticker-month):**
+- Z-score rule 0.303 / 0.654 (0.107); Isolation Forest 0.218 / 0.714 (0.437)
+- LSTM autoencoder 0.229 / 0.184 (0.257): best epoch 98 of 100, 390s on CPU
+- Transformer forecaster 0.235 / **0.721** (0.198): best epoch 2 of 7, 86s on CPU
 
-**Next:** Phase 4, the deep models (LSTM autoencoder, small Transformer) on daily windows. Train on CPU, show training curves (load the `dataviz` skill before making charts), and use the same `AnomalyModel` interface, scaler, and `Evaluator.run`. Then Phase 5: consider including the z-score rule as an ensemble member, since it covers Isolation Forest's volume blind spot. Decide this on val only.
+**Open decision (waiting on the user):** on val, the LSTM autoencoder rebuilds about 78% of big moves at the scored bar (slope 0.78), so it partly copies anomalies instead of flagging them. That's why it does badly on earnings shocks. Option: choose a tighter bottleneck (hidden_size 4/8/16/32) by **val** PR-AUC and report both versions, because its test numbers were already seen once. Or keep it as is and document the failure mode.
+
+**Next:** settle the decision above, commit Phase 4, then Phase 5 (ensemble; consider including the z-score rule, decided on val only).

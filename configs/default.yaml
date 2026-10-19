@@ -98,3 +98,21 @@ models:
       max_samples: [256, 2048]
     max_features: 1.0
     n_jobs: -1
+  deep:                             # shared by the LSTM autoencoder and the Transformer
+    feature_set: base_plus_normalized
+    window: 20                      # bars of history per sample, ending at the scored bar
+    holdout_frac: 0.1               # last 10% of TRAIN dates, for early stopping (val is never used for training)
+    batch_size: 512
+    max_epochs: 100                 # a ceiling; early stopping on the holdout normally ends training first
+    patience: 5                     # stop after this many epochs without holdout improvement
+    learning_rate: 0.001
+    torch_threads: 4
+    lstm_autoencoder:
+      hidden_size: 32
+      num_layers: 1
+    transformer:
+      d_model: 32
+      n_heads: 4
+      n_layers: 2
+      ff_dim: 64
+      dropout: 0.1
