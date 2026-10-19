@@ -221,3 +221,15 @@ __marimo__/
 
 # Claude Code session instructions (kept local)
 CLAUDE.md
+
+# Project: downloaded data, caches, and trained models (all regenerable)
+/data/
+/models/
+*.parquet
+*.pt
+*.pth
+*.joblib
+*.ckpt
+
+# macOS
+.DS_Store

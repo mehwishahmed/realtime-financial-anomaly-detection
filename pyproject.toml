@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anomaly"
+version = "0.1.0"
+description = "Real-time anomaly detection across financial assets: Isolation Forest, LSTM autoencoder, Transformer ensemble, plus a streaming benchmark."
+requires-python = ">=3.12"
+# Dependencies are pinned in requirements.txt; this file only makes `src/anomaly` installable.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
