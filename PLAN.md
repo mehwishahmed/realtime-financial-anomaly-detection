@@ -1,6 +1,6 @@
 # Project Plan
 
-Working rules (honesty, constraints, teaching) are in [CLAUDE.md](CLAUDE.md).
+Working rules (honesty, constraints, teaching) are in CLAUDE.md.
 
 ## Project
 Real-time anomaly detection across a large universe of financial assets, using an ensemble of Isolation Forest, an LSTM autoencoder, and a small Transformer, plus a streaming simulation that measures detection latency and false-alarm rate.
