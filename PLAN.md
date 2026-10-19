@@ -93,6 +93,7 @@ After each phase: run it, show the output, explain it in plain English, write te
 - Model inputs are standardized per ticker using train-split statistics only. Tickers with fewer than 250 train rows use global statistics.
 - Deep models early-stop on the last 10% of TRAIN dates, never on val (val has injected anomalies).
 - The LSTM's first run hit the 30-epoch cap while its holdout loss was still falling (test PR-AUC 0.207 / 0.196). The cap was raised to 100 based on the training curve alone; the rerun is the reported result.
+- LSTM bottleneck fix: the user asked for a tighter bottleneck chosen by val PR-AUC. The first search wrongly included the original size (32) as a candidate, and it won on val synthetic (0.286 vs 0.277). The rerun restricts candidates to 4/8/16 as instructed and keeps 32's numbers in the search table. Test numbers exist only for 32 and 4.
 - Isolation Forest settings were chosen by val PR-AUC. After seeing its test results we deliberately did NOT add new feature sets, because that would tune on test.
 
 ## Notes for the README's Limitations section
@@ -100,18 +101,17 @@ After each phase: run it, show the output, explain it in plain English, write te
 - Intraday data is a ~60-day snapshot that depends on the download date (fetch dates are saved in `data/raw/intraday/_manifest.csv`).
 - `large_move` real events are defined by |return| / volatility, the same quantity some features measure, so detecting them is partly circular. `earnings_shock` is the fairer real-world test.
 - Isolation Forest scores saturate beyond the training range (a 100-sigma move scores the same as a ~3-sigma one), so it misses most one-feature anomalies such as volume bursts.
-- The LSTM autoencoder partly reconstructs large moves (it rebuilds ~78% of a big ret_z at the scored bar), so it under-scores price shocks.
+- Autoencoders can copy anomalies through a loose bottleneck. The original LSTM (bottleneck 32) rebuilt ~78% of big moves; the fixed version (bottleneck 4) rebuilds ~14% but catches fewer volume bursts.
 - Event recall can be inflated by alarming constantly (the random baseline gets ~0.89 event recall at ~34 false alarms per day), so it's only meaningful next to the false-alarm rate.
 
 
 ## Progress (last updated 2026-10-19)
-**Done:** Step 0, Phases 1-3, the false-alarm metric clarification, and a first full pass of Phase 4 (both deep models trained and evaluated, curves in `results/charts/`). 65 tests pass.
+**Done:** Step 0 and Phases 1-4. The README has a "Results so far" table (test, 100 tickers) with every model, including both LSTM versions. 66 tests pass.
 
-**Phase 4 results so far (test, 100 tickers; PR-AUC synthetic / real; false alarms per ticker-month):**
-- Z-score rule 0.303 / 0.654 (0.107); Isolation Forest 0.218 / 0.714 (0.437)
-- LSTM autoencoder 0.229 / 0.184 (0.257): best epoch 98 of 100, 390s on CPU
-- Transformer forecaster 0.235 / **0.721** (0.198): best epoch 2 of 7, 86s on CPU
+**Phase 4 outcome (test; PR-AUC synthetic / real; false alarms per ticker-month):**
+- LSTM autoencoder, original (bottleneck 32): 0.229 / 0.184 (0.257). It copies large moves (val copy slope 0.78).
+- LSTM autoencoder, fixed (bottleneck 4, chosen by val PR-AUC among 4/8/16): 0.251 / 0.664 (0.116), copy slope 0.14, 403 parameters.
+- Transformer forecaster: 0.235 / 0.721 (0.198).
+- Still nobody beats the z-score rule on synthetic (0.303). The fixed LSTM's volume-burst recall fell (0.47 to 0.17 on test).
 
-**Open decision (waiting on the user):** on val, the LSTM autoencoder rebuilds about 78% of big moves at the scored bar (slope 0.78), so it partly copies anomalies instead of flagging them. That's why it does badly on earnings shocks. Option: choose a tighter bottleneck (hidden_size 4/8/16/32) by **val** PR-AUC and report both versions, because its test numbers were already seen once. Or keep it as is and document the failure mode.
-
-**Next:** settle the decision above, commit Phase 4, then Phase 5 (ensemble; consider including the z-score rule, decided on val only).
+**Next:** Phase 5, the ensemble. Normalize each model's scores (fit the normalization on train or val only), combine them with a weighted average tuned on val, and compare against each model. Consider including the z-score rule as a member (it covers the volume blind spot); decide on val only. Use the `lstm_autoencoder` (fixed) scores, not the original.

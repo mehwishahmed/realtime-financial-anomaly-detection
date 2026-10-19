@@ -112,6 +112,19 @@ def test_error_keeps_growing_with_the_size_of_the_anomaly(cls, arch):
     assert scores[0] < scores[1] < scores[2] < scores[3]
 
 
+def test_copy_slope_measures_how_much_of_a_big_input_is_rebuilt():
+    df = _panel(n=400)
+    df["split"] = np.where(df["timestamp"] < df["timestamp"].quantile(0.5), "train", "val")
+    rng = np.random.default_rng(1)
+    spikes = rng.choice(df.index, 40, replace=False)
+    df.loc[spikes, "b"] = rng.choice([-6.0, 6.0], 40)  # big values so the fit has enough points
+    model = LSTMAutoencoderModel(FEATURES, hidden_size=8, seed=0, **SMALL).fit(df[df["split"] == "train"])
+    slope = model.copy_slope(df, feature="b", min_abs=3.0)
+    assert np.isfinite(slope) and -1.5 < slope < 1.5
+    assert np.isfinite(model.copy_slope(df, feature="b", min_abs=3.0, split="val"))
+    assert np.isnan(model.copy_slope(df, feature="b", min_abs=1e9))  # nothing that large: no slope
+
+
 def test_scoring_before_fit_raises():
     with pytest.raises(RuntimeError, match="before fit"):
         LSTMAutoencoderModel(FEATURES, **SMALL).score(_panel())

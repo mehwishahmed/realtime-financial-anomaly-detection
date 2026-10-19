@@ -194,6 +194,29 @@ class LSTMAutoencoderModel(WindowModel):
         sq = (net(x) - x) ** 2
         return sq.mean(), sq[:, -1, :].mean(dim=1)  # train on the whole window, score the last bar
 
+    def copy_slope(self, df: pd.DataFrame, feature: str = "ret_z", min_abs: float = 3.0, split: str | None = None) -> float:
+        """How much of a large input value the model rebuilds at the scored (last) bar.
+
+        Fits rebuilt ~ actual over windows whose last-bar ``feature`` (scaled)
+        exceeds ``min_abs`` in size. Near 0: big moves can't pass the
+        bottleneck, so they show up as error (what we want). Near 1: the model
+        copies them through, which hides the anomaly. ``split`` limits it to
+        windows whose last bar is in that split (windows still use earlier context).
+        """
+        if self.net is None:
+            raise RuntimeError("copy_slope called before fit")
+        x, rows = make_windows(df, self.features, self.scaler, self.window)
+        if split is not None:
+            x = x[df["split"].to_numpy()[rows] == split]
+        i = self.features.index(feature)
+        big = np.abs(x[:, -1, i]) > min_abs
+        if big.sum() < 2:
+            return float("nan")
+        self.net.eval()
+        with torch.no_grad():
+            rebuilt = self.net(torch.from_numpy(x[big])).numpy()[:, -1, i]
+        return float(np.polyfit(x[big, -1, i], rebuilt, 1)[0])
+
 
 # ---------- Transformer forecaster ----------
 

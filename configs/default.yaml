@@ -108,7 +108,8 @@ models:
     learning_rate: 0.001
     torch_threads: 4
     lstm_autoencoder:
-      hidden_size: 32
+      hidden_size: 32               # the original first-pass model, kept and reported as lstm_autoencoder_original
+      hidden_size_grid: [4, 8, 16]  # tighter bottlenecks; the best val PR-AUC (tune_track) among these becomes lstm_autoencoder
       num_layers: 1
     transformer:
       d_model: 32

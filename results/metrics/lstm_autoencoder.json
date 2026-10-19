@@ -1,6 +1,6 @@
 {
   "model": "lstm_autoencoder",
-  "threshold": 1.4232509136199951,
+  "threshold": 6.164429187774658,
   "threshold_objective": "f1",
   "tuned_on": "val/synthetic",
   "grace_bars": 3,
@@ -11,36 +11,36 @@
         "rows_counted": 35638,
         "coverage": 0.999464539102032,
         "anomaly_rate": 0.015741624109097033,
-        "pr_auc": 0.28604982264248624,
-        "precision": 0.48598130841121495,
-        "recall": 0.27807486631016043,
-        "f1": 0.35374149659863946,
-        "tp": 156,
-        "fp": 165,
-        "fn": 405,
-        "false_alarms": 165,
-        "false_alarms_per_day_all_tickers": 0.4411764705882353,
-        "false_alarms_per_ticker_day": 0.004417552408235389,
-        "false_alarms_per_ticker_month": 0.09276860057294317,
+        "pr_auc": 0.2773535928535474,
+        "precision": 0.5739130434782609,
+        "recall": 0.23529411764705882,
+        "f1": 0.33375474083438683,
+        "tp": 132,
+        "fp": 98,
+        "fn": 429,
+        "false_alarms": 98,
+        "false_alarms_per_day_all_tickers": 0.2620320855614973,
+        "false_alarms_per_ticker_day": 0.002623758400042837,
+        "false_alarms_per_ticker_month": 0.05509892640089958,
         "events": 219,
-        "event_recall": 0.7168949771689498,
-        "mean_delay_bars": 0.10191082802547771,
+        "event_recall": 0.7397260273972602,
+        "mean_delay_bars": 0.21604938271604937,
         "median_delay_bars": 0.0,
         "by_type": {
           "level_shift": {
             "events": 67,
-            "recall": 0.8805970149253731,
-            "mean_delay_bars": 0.03389830508474576
+            "recall": 1.0,
+            "mean_delay_bars": 0.0
           },
           "price_spike": {
             "events": 75,
-            "recall": 0.9066666666666666,
-            "mean_delay_bars": 0.16176470588235295
+            "recall": 0.9866666666666667,
+            "mean_delay_bars": 0.3783783783783784
           },
           "volume_burst": {
             "events": 77,
-            "recall": 0.38961038961038963,
-            "mean_delay_bars": 0.1
+            "recall": 0.2727272727272727,
+            "mean_delay_bars": 0.3333333333333333
           }
         }
       },
@@ -49,31 +49,31 @@
         "rows_counted": 35344,
         "coverage": 0.999464539102032,
         "anomaly_rate": 0.007554323223177908,
-        "pr_auc": 0.21714983709332172,
-        "precision": 0.3237704918032787,
-        "recall": 0.2958801498127341,
-        "f1": 0.3091976516634051,
-        "tp": 79,
-        "fp": 165,
-        "fn": 188,
-        "false_alarms": 165,
-        "false_alarms_per_day_all_tickers": 0.4411764705882353,
-        "false_alarms_per_ticker_day": 0.004417552408235389,
-        "false_alarms_per_ticker_month": 0.09276860057294317,
+        "pr_auc": 0.7169765822548412,
+        "precision": 0.6462093862815884,
+        "recall": 0.6704119850187266,
+        "f1": 0.6580882352941176,
+        "tp": 179,
+        "fp": 98,
+        "fn": 88,
+        "false_alarms": 98,
+        "false_alarms_per_day_all_tickers": 0.2620320855614973,
+        "false_alarms_per_ticker_day": 0.002623758400042837,
+        "false_alarms_per_ticker_month": 0.05509892640089958,
         "events": 267,
-        "event_recall": 0.3258426966292135,
-        "mean_delay_bars": 0.1839080459770115,
+        "event_recall": 0.6704119850187266,
+        "mean_delay_bars": 0.0,
         "median_delay_bars": 0.0,
         "by_type": {
           "earnings_shock": {
             "events": 244,
-            "recall": 0.32786885245901637,
-            "mean_delay_bars": 0.1875
+            "recall": 0.6434426229508197,
+            "mean_delay_bars": 0.0
           },
           "large_move": {
             "events": 23,
-            "recall": 0.30434782608695654,
-            "mean_delay_bars": 0.14285714285714285
+            "recall": 0.9565217391304348,
+            "mean_delay_bars": 0.0
           }
         }
       }
@@ -84,36 +84,36 @@
         "rows_counted": 53887,
         "coverage": 1.0,
         "anomaly_rate": 0.015384044389184776,
-        "pr_auc": 0.22907457228140238,
-        "precision": 0.2854188210961737,
-        "recall": 0.33293124246079614,
-        "f1": 0.3073496659242762,
-        "tp": 276,
-        "fp": 691,
-        "fn": 553,
-        "false_alarms": 691,
-        "false_alarms_per_day_all_tickers": 1.2230088495575222,
-        "false_alarms_per_ticker_day": 0.012230088495575222,
-        "false_alarms_per_ticker_month": 0.25683185840707967,
+        "pr_auc": 0.250798759699412,
+        "precision": 0.3953488372093023,
+        "recall": 0.24607961399276237,
+        "f1": 0.3033457249070632,
+        "tp": 204,
+        "fp": 312,
+        "fn": 625,
+        "false_alarms": 312,
+        "false_alarms_per_day_all_tickers": 0.552212389380531,
+        "false_alarms_per_ticker_day": 0.00552212389380531,
+        "false_alarms_per_ticker_month": 0.1159646017699115,
         "events": 315,
-        "event_recall": 0.7714285714285715,
-        "mean_delay_bars": 0.09876543209876543,
+        "event_recall": 0.7174603174603175,
+        "mean_delay_bars": 0.15486725663716813,
         "median_delay_bars": 0.0,
         "by_type": {
           "level_shift": {
             "events": 100,
-            "recall": 0.91,
+            "recall": 0.99,
             "mean_delay_bars": 0.0
           },
           "price_spike": {
             "events": 114,
-            "recall": 0.9210526315789473,
-            "mean_delay_bars": 0.13333333333333333
+            "recall": 0.9649122807017544,
+            "mean_delay_bars": 0.2818181818181818
           },
           "volume_burst": {
             "events": 101,
-            "recall": 0.46534653465346537,
-            "mean_delay_bars": 0.2127659574468085
+            "recall": 0.16831683168316833,
+            "mean_delay_bars": 0.23529411764705882
           }
         }
       },
@@ -122,31 +122,31 @@
         "rows_counted": 53474,
         "coverage": 1.0,
         "anomaly_rate": 0.007779481617234544,
-        "pr_auc": 0.18440141222940554,
-        "precision": 0.18127962085308058,
-        "recall": 0.36778846153846156,
-        "f1": 0.24285714285714285,
-        "tp": 153,
-        "fp": 691,
-        "fn": 263,
-        "false_alarms": 691,
-        "false_alarms_per_day_all_tickers": 1.2230088495575222,
-        "false_alarms_per_ticker_day": 0.012230088495575222,
-        "false_alarms_per_ticker_month": 0.25683185840707967,
+        "pr_auc": 0.6635148009352617,
+        "precision": 0.4910277324632953,
+        "recall": 0.7235576923076923,
+        "f1": 0.5850340136054423,
+        "tp": 301,
+        "fp": 312,
+        "fn": 115,
+        "false_alarms": 312,
+        "false_alarms_per_day_all_tickers": 0.552212389380531,
+        "false_alarms_per_ticker_day": 0.00552212389380531,
+        "false_alarms_per_ticker_month": 0.1159646017699115,
         "events": 416,
-        "event_recall": 0.40865384615384615,
-        "mean_delay_bars": 0.17647058823529413,
+        "event_recall": 0.7307692307692307,
+        "mean_delay_bars": 0.02631578947368421,
         "median_delay_bars": 0.0,
         "by_type": {
           "earnings_shock": {
             "events": 342,
-            "recall": 0.35964912280701755,
-            "mean_delay_bars": 0.17073170731707318
+            "recall": 0.7105263157894737,
+            "mean_delay_bars": 0.00823045267489712
           },
           "large_move": {
             "events": 74,
-            "recall": 0.6351351351351351,
-            "mean_delay_bars": 0.19148936170212766
+            "recall": 0.8243243243243243,
+            "mean_delay_bars": 0.09836065573770492
           }
         }
       }

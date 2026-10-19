@@ -52,6 +52,21 @@ Every model goes through the same evaluator (`src/anomaly/evaluation/`). The ala
 
 A false alarm is an alarm on a bar that isn't part of any event. Alarms in the 3 bars after an event (late detections) and alarms on the other track's events are never counted as false alarms.
 
+## Results so far
+
+100 randomly chosen S&P 500 stocks (seed 42), daily bars. The test period is 2024-07-01 to 2026-09-30. Every number below is copied from [`results/metrics/summary.csv`](results/metrics/summary.csv), produced by `make baselines`, `make iforest`, and `make deep`. Thresholds were tuned on validation; the test set was not used to choose anything.
+
+| Model | PR-AUC synthetic | PR-AUC real | Event recall synthetic | Event recall real | False alarms / day (all tickers) | False alarms / ticker / month |
+|---|---|---|---|---|---|---|
+| Random scores (sanity floor) | 0.016 | 0.008 | 0.892 | 0.815 | 34.58 | 7.263 |
+| Z-score rule (largest of return σ, gap σ, volume z) | 0.303 | 0.654 | 0.860 | 0.728 | 0.51 | 0.107 |
+| Isolation Forest | 0.218 | 0.714 | 0.756 | 0.889 | 2.08 | 0.437 |
+| LSTM autoencoder, original (bottleneck 32) | 0.229 | 0.184 | 0.771 | 0.409 | 1.22 | 0.257 |
+| LSTM autoencoder, fixed (bottleneck 4) | 0.251 | 0.664 | 0.717 | 0.731 | 0.55 | 0.116 |
+| Transformer forecaster | 0.235 | 0.721 | 0.775 | 0.865 | 0.94 | 0.198 |
+
+**About the two LSTM rows.** The original LSTM autoencoder (bottleneck 32) partly *copied* large moves through its bottleneck: on validation it rebuilt ~78% of a big return at the bar it scores, which hid exactly the anomalies it should flag. A search over tighter bottlenecks (4, 8, 16), selected by **validation** PR-AUC only, picked 4 (403 parameters). Copying dropped to ~14%, and both rows are reported. The full search table is in [`results/models/lstm_autoencoder_bottleneck_search.csv`](results/models/lstm_autoencoder_bottleneck_search.csv); the original had slightly higher validation PR-AUC on synthetic anomalies (0.286 vs 0.277) but far lower on real events (0.217 vs 0.717). Training curves are in [`results/charts/`](results/charts/).
+
 ## Project layout
 
 | Path | What's there |
