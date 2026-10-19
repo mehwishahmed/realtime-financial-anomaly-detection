@@ -47,6 +47,7 @@ class IsolationForestModel(AnomalyModel):
         self.train_rows = 0
 
     def fit(self, train: pd.DataFrame) -> "IsolationForestModel":
+        """Fit the scaler and the forest on train rows that have every feature."""
         rows = train.dropna(subset=self.features)
         self.scaler.fit(rows, self.features)
         x = self.scaler.transform(rows)
@@ -55,6 +56,7 @@ class IsolationForestModel(AnomalyModel):
         return self
 
     def score(self, df: pd.DataFrame) -> np.ndarray:
+        """Negated ``score_samples`` (higher = more anomalous); NaN where an input is missing."""
         out = np.full(len(df), np.nan)
         ok = df[self.features].notna().all(axis=1).to_numpy()
         if ok.any():

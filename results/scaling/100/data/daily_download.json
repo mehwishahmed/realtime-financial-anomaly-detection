@@ -1,0 +1,13 @@
+{
+  "frequency": "daily",
+  "interval": "1d",
+  "universe_file": "sp500.csv",
+  "requested": 101,
+  "cached": 101,
+  "downloaded": 0,
+  "failed": 0,
+  "requests_made": 0,
+  "retries": 0,
+  "failed_tickers": [],
+  "seconds": 0.0
+}

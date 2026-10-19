@@ -22,9 +22,11 @@ class ZScoreRuleModel(AnomalyModel):
         self.vol_col = vol_col
 
     def fit(self, train: pd.DataFrame) -> "ZScoreRuleModel":
+        """Nothing to learn; returns self."""
         return self
 
     def score(self, df: pd.DataFrame) -> np.ndarray:
+        """Rule score for each row of ``df`` (any row order)."""
         flat = df.reset_index(drop=True)
         order = flat.sort_values(["ticker", "timestamp"], kind="stable").index
         scores = zscore_rule_scores(flat.loc[order], vol_col=self.vol_col)["score"].to_numpy()

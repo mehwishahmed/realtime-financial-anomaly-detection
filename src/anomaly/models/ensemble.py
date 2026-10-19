@@ -39,6 +39,7 @@ class ScoreNormalizer:
         self.reference: np.ndarray | None = None
 
     def fit(self, train_scores: np.ndarray) -> "ScoreNormalizer":
+        """Learn the scale from one member's train-split scores."""
         s = np.asarray(train_scores, dtype=float)
         s = s[np.isfinite(s)]
         if len(s) == 0:
@@ -52,6 +53,7 @@ class ScoreNormalizer:
         return self
 
     def transform(self, scores: np.ndarray) -> np.ndarray:
+        """Map raw scores onto the common scale (NaN stays NaN)."""
         s = np.asarray(scores, dtype=float)
         if self.method == "robust_z":
             return (s - self.center) / self.scale
@@ -103,9 +105,11 @@ class EnsembleModel(AnomalyModel):
 
     @property
     def order(self) -> list[str]:
+        """Member names in a fixed order (the column order of raw score matrices)."""
         return list(self.members)
 
     def fit(self, train: pd.DataFrame) -> "EnsembleModel":
+        """Learn the scale from one member's train-split scores."""
         return self.fit_from_scores({n: self.members[n].score(train) for n in self.order})
 
     def fit_from_scores(self, train_scores: dict[str, np.ndarray]) -> "EnsembleModel":

@@ -50,6 +50,7 @@ def main() -> None:
     log.info("Train rows %d, val rows %d", len(train), len(val))
 
     def build(feature_set: str, n_estimators: int, max_samples: int) -> IsolationForestModel:
+        """An unfitted Isolation Forest for one grid combination."""
         return IsolationForestModel(
             features=list(mcfg.feature_sets[feature_set]),
             n_estimators=n_estimators,

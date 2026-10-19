@@ -31,6 +31,7 @@ class DownloadReport:
     retries: int = 0
 
     def summary(self) -> dict[str, int]:
+        """Counts for the run summary JSON."""
         return {
             "requested": len(self.requested),
             "cached": len(self.cached),
@@ -42,6 +43,7 @@ class DownloadReport:
 
 
 def cache_path(raw_dir: Path, ticker: str) -> Path:
+    """The parquet file that caches one ticker's bars."""
     return raw_dir / f"{ticker}.parquet"
 
 

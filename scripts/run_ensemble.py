@@ -48,6 +48,7 @@ def main() -> None:
     track = cfg.evaluation.tune_track
     names = list(ens_cfg.members)
 
+    (cfg.paths.results_dir / "models").mkdir(parents=True, exist_ok=True)
     labeled, events = load_labeled(cfg)
     labeled = add_derived_features(labeled, vol_col=f"vol_{cfg.features.vol_windows[0]}")
     evaluator = Evaluator(labeled, events, cfg.evaluation)
@@ -88,6 +89,7 @@ def main() -> None:
     log.info("Searched %d weight vectors x %d normalizations on val in %.1fs", len(grid), len(ens_cfg.normalizations), search_t["seconds"])
 
     def pick(metric: str) -> tuple[str, dict[str, float]]:
+        """Normalization and weights of the best val row by ``metric``."""
         best = search.sort_values(metric, ascending=False, kind="stable").iloc[0]
         return str(best["normalization"]), {n: float(best[n]) for n in names}
 

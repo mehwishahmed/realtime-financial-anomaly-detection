@@ -128,3 +128,38 @@ def test_copy_slope_measures_how_much_of_a_big_input_is_rebuilt():
 def test_scoring_before_fit_raises():
     with pytest.raises(RuntimeError, match="before fit"):
         LSTMAutoencoderModel(FEATURES, **SMALL).score(_panel())
+
+
+# ---------- scaling helpers ----------
+
+
+def test_masked_windows_are_a_subset_of_the_full_windows():
+    df = _panel(n=40).sample(frac=1, random_state=3)
+    scaler = _fitted_scaler(df)
+    full_x, full_rows = make_windows(df, FEATURES, scaler, length=5)
+    mask = np.zeros(len(df), dtype=bool)
+    mask[np.random.default_rng(0).choice(len(df), 25, replace=False)] = True
+    x, rows = make_windows(df, FEATURES, scaler, length=5, end_mask=mask)
+    assert mask[rows].all()
+    lookup = {r: i for i, r in enumerate(full_rows)}
+    assert set(rows) == {r for r in full_rows if mask[r]}
+    for window, row in zip(x, rows):
+        np.testing.assert_array_equal(window, full_x[lookup[row]])
+
+
+def test_chunked_scoring_matches_unchunked(monkeypatch):
+    import anomaly.models.deep as deep
+
+    df = _panel(n=120, tickers=("A", "B", "C", "D", "E"))
+    model = LSTMAutoencoderModel(FEATURES, hidden_size=4, seed=0, **SMALL).fit(df)
+    whole = model.score(df)
+    monkeypatch.setattr(deep, "SCORE_CHUNK_TICKERS", 2)
+    np.testing.assert_allclose(model.score(df.sample(frac=1, random_state=0).sort_index()), whole, rtol=1e-5, equal_nan=True)
+
+
+def test_training_window_cap():
+    df = _panel(n=300, tickers=("A", "B", "C"))
+    capped = LSTMAutoencoderModel(FEATURES, hidden_size=4, seed=0, max_train_windows=1000, **SMALL).fit(df)
+    uncapped = LSTMAutoencoderModel(FEATURES, hidden_size=4, seed=0, **SMALL).fit(df)
+    assert capped.train_windows + capped.holdout_windows <= 1000
+    assert uncapped.train_windows + uncapped.holdout_windows == 3 * (300 - SMALL["window"] + 1)

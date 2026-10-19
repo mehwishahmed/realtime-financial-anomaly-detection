@@ -51,9 +51,10 @@ def main() -> None:
         original = build_features(clean, market, freq, cfg.features)
         original, bounds = assign_splits(original, freq.splits)
 
-        # Real events, found on the untouched data.
+        # Real events, found on the untouched data. Earnings dates are only needed for tickers that passed cleaning.
+        stocks = sorted(set(clean["ticker"]) - {market})
         log.info("Fetching earnings dates for %d tickers", len(stocks))
-        earnings_dir = cfg.paths.data_dir / "raw" / "earnings"
+        earnings_dir = cfg.earnings_dir()
         earn_status = download_earnings(stocks, earnings_dir, cfg.labels.real.earnings_limit, cfg.download, logger=log)
         calendar = pd.DatetimeIndex(clean.loc[clean["ticker"] == market, "timestamp"])
         reactions = reaction_days(load_earnings(stocks, earnings_dir), calendar, cfg.labels.real.earnings_after_hour)

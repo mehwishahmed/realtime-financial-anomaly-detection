@@ -1,0 +1,15 @@
+{
+  "frequency": "daily",
+  "interval": "1d",
+  "universe_file": "sp500.csv",
+  "requested": 504,
+  "cached": 101,
+  "downloaded": 402,
+  "failed": 1,
+  "requests_made": 12,
+  "retries": 3,
+  "failed_tickers": [
+    "VYLR"
+  ],
+  "seconds": 69.2
+}

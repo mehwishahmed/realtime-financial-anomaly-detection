@@ -1,0 +1,53 @@
+{
+  "members": [
+    "baseline_zscore_rule",
+    "lstm_autoencoder"
+  ],
+  "weight_step": 0.1,
+  "normalizations_tried": [
+    "robust_z",
+    "rank"
+  ],
+  "weight_vectors_tried": 11,
+  "normalizers_fit_on": "train split scores of each member",
+  "ensembles": {
+    "ensemble": {
+      "chosen_by": "best val PR-AUC on the synthetic track",
+      "normalization": "robust_z",
+      "weights": {
+        "baseline_zscore_rule": 0.9,
+        "lstm_autoencoder": 0.1
+      },
+      "val_pr_auc_synthetic": 0.336772,
+      "val_pr_auc_real": 0.724187,
+      "threshold": 7.228551146190613
+    },
+    "ensemble_balanced": {
+      "chosen_by": "best mean of val PR-AUC on the synthetic and real tracks",
+      "normalization": "robust_z",
+      "weights": {
+        "baseline_zscore_rule": 0.8,
+        "lstm_autoencoder": 0.2
+      },
+      "val_pr_auc_synthetic": 0.334938,
+      "val_pr_auc_real": 0.730368,
+      "threshold": 8.517194654652894
+    },
+    "ensemble_equal": {
+      "chosen_by": "equal weights, robust_z (untuned reference)",
+      "normalization": "robust_z",
+      "weights": {
+        "baseline_zscore_rule": 0.5,
+        "lstm_autoencoder": 0.5
+      },
+      "val_pr_auc_synthetic": 0.318042,
+      "val_pr_auc_real": 0.698634,
+      "threshold": 10.803040748631624
+    }
+  },
+  "end_to_end_check": {
+    "max_abs_difference": 0.0,
+    "same_unscored_rows": true,
+    "seconds": 4.5
+  }
+}

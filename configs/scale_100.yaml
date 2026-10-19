@@ -1,0 +1,23 @@
+# Scaling run: 100 random S&P 500 stocks (same seed as the main run). Only the differences from default.yaml are listed.
+# Runs the deployed pipeline on daily data (rule + bottleneck-4 LSTM ensemble), via scripts/run_scaling.py.
+extends: default.yaml
+
+paths:
+  data_dir: data/scaling/100
+  results_dir: results/scaling/100
+  models_dir: models/scaling/100
+  raw_data_dir: data/raw            # shared download cache; download time below counts newly downloaded tickers only
+
+universe: {file: configs/tickers/sp500.csv, max_tickers: 100}
+
+models:
+  deep:
+    max_train_windows: 500000       # seeded sample of LSTM training windows, to bound memory and time at scale
+    lstm_autoencoder:
+      hidden_size: 4                # the bottleneck chosen in Phase 4; no search at scale
+      hidden_size_grid: [4]
+  ensemble:
+    members: [baseline_zscore_rule, lstm_autoencoder]   # the members with weight in the deployed ensemble
+
+scaling:
+  step_timeout_minutes: 120         # stop (and report) if any step takes longer than this

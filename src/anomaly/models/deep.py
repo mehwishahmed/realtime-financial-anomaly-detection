@@ -20,7 +20,9 @@ from torch import nn
 
 from anomaly.models.base import AnomalyModel
 from anomaly.models.preprocess import FeatureScaler
-from anomaly.models.windows import make_windows
+from anomaly.models.windows import make_windows, window_end_candidates
+
+SCORE_CHUNK_TICKERS = 300  # score this many tickers at a time, to bound memory on large universes
 
 
 class WindowModel(AnomalyModel):
@@ -39,6 +41,7 @@ class WindowModel(AnomalyModel):
         holdout_frac: float = 0.1,
         seed: int = 42,
         torch_threads: int = 4,
+        max_train_windows: int | None = None,
     ):
         self.features = list(features)
         self.window = window
@@ -50,6 +53,7 @@ class WindowModel(AnomalyModel):
         self.holdout_frac = holdout_frac
         self.seed = seed
         self.torch_threads = torch_threads
+        self.max_train_windows = max_train_windows
         self.net: nn.Module | None = None
         self.history: list[dict[str, float]] = []
         self.best_epoch = 0
@@ -74,6 +78,7 @@ class WindowModel(AnomalyModel):
         torch.use_deterministic_algorithms(True, warn_only=True)
 
     def n_parameters(self) -> int:
+        """Number of trainable weights in the network (0 before fit)."""
         return sum(p.numel() for p in self.net.parameters()) if self.net is not None else 0
 
     def _batch_errors(self, x: np.ndarray, train: bool = False) -> tuple[float, np.ndarray]:
@@ -90,9 +95,17 @@ class WindowModel(AnomalyModel):
         return sum(losses) / max(len(x), 1), np.concatenate(scores) if scores else np.empty(0)
 
     def fit(self, train: pd.DataFrame) -> "WindowModel":
+        """Scale features, build training windows, and train with early stopping on the train-period holdout."""
         self._setup_torch()
         self.scaler.fit(train.dropna(subset=self.features), self.features)
-        x, rows = make_windows(train, self.features, self.scaler, self.window)
+        end_mask = None
+        if self.max_train_windows is not None:
+            candidates = window_end_candidates(train, self.window)
+            if len(candidates) > self.max_train_windows:
+                picked = np.random.default_rng(self.seed).choice(candidates, self.max_train_windows, replace=False)
+                end_mask = np.zeros(len(train), dtype=bool)
+                end_mask[picked] = True
+        x, rows = make_windows(train, self.features, self.scaler, self.window, end_mask=end_mask)
         last_day = train["timestamp"].to_numpy()[rows]
         days = np.sort(np.unique(last_day))
         cutoff = days[int(len(days) * (1 - self.holdout_frac)) - 1]
@@ -147,10 +160,17 @@ class WindowModel(AnomalyModel):
             raise RuntimeError("score called before fit")
         torch.set_num_threads(self.torch_threads)
         out = np.full(len(df), np.nan)
-        x, rows = make_windows(df, self.features, self.scaler, self.window)
-        if len(x):
-            _, scores = self._batch_errors(x)
-            out[rows] = scores
+        tickers = pd.unique(df["ticker"])
+        if len(tickers) <= SCORE_CHUNK_TICKERS:
+            chunks = [np.arange(len(df))]
+        else:
+            codes = pd.Categorical(df["ticker"], categories=tickers).codes // SCORE_CHUNK_TICKERS
+            chunks = [np.flatnonzero(codes == c) for c in range(codes.max() + 1)]
+        for idx in chunks:
+            x, rows = make_windows(df.iloc[idx], self.features, self.scaler, self.window)
+            if len(x):
+                _, scores = self._batch_errors(x)
+                out[idx[rows]] = scores
         return out
 
 
@@ -165,6 +185,7 @@ class _LSTMAutoencoder(nn.Module):
         self.output = nn.Linear(hidden_size, n_features)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the network on a batch."""
         _, (h, _) = self.encoder(x)
         summary = h[-1].unsqueeze(1).repeat(1, x.size(1), 1)  # the whole window squeezed into one vector
         decoded, _ = self.decoder(summary)
@@ -188,9 +209,11 @@ class LSTMAutoencoderModel(WindowModel):
         self.num_layers = num_layers
 
     def build_network(self, n_features: int) -> nn.Module:
+        """A fresh, untrained network for ``n_features`` inputs."""
         return _LSTMAutoencoder(n_features, self.hidden_size, self.num_layers)
 
     def errors(self, net: nn.Module, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """(training loss, per-window anomaly score) for a batch of windows."""
         sq = (net(x) - x) ** 2
         return sq.mean(), sq[:, -1, :].mean(dim=1)  # train on the whole window, score the last bar
 
@@ -205,9 +228,8 @@ class LSTMAutoencoderModel(WindowModel):
         """
         if self.net is None:
             raise RuntimeError("copy_slope called before fit")
-        x, rows = make_windows(df, self.features, self.scaler, self.window)
-        if split is not None:
-            x = x[df["split"].to_numpy()[rows] == split]
+        end_mask = (df["split"].to_numpy() == split) if split is not None else None
+        x, _ = make_windows(df, self.features, self.scaler, self.window, end_mask=end_mask)
         i = self.features.index(feature)
         big = np.abs(x[:, -1, i]) > min_abs
         if big.sum() < 2:
@@ -231,6 +253,7 @@ class _TransformerForecaster(nn.Module):
         self.head = nn.Linear(d_model, n_features)
 
     def forward(self, context: torch.Tensor) -> torch.Tensor:
+        """Run the network on a batch."""
         h = self.encoder(self.input(context) + self.position)
         return self.head(h[:, -1])
 
@@ -260,8 +283,10 @@ class TransformerForecastModel(WindowModel):
         self.arch = {"d_model": d_model, "n_heads": n_heads, "n_layers": n_layers, "ff_dim": ff_dim, "dropout": dropout}
 
     def build_network(self, n_features: int) -> nn.Module:
+        """A fresh, untrained network for ``n_features`` inputs."""
         return _TransformerForecaster(n_features, self.window - 1, **self.arch)
 
     def errors(self, net: nn.Module, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """(training loss, per-window anomaly score) for a batch of windows."""
         sq = (net(x[:, :-1]) - x[:, -1]) ** 2
         return sq.mean(), sq.mean(dim=1)

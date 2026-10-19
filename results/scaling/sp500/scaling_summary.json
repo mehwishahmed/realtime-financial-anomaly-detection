@@ -1,0 +1,79 @@
+{
+  "scale": "sp500",
+  "config": "configs/scale_sp500.yaml",
+  "steps": [
+    {
+      "step": "download",
+      "status": "ok",
+      "seconds": 69.5,
+      "peak_rss_mb": 311.0
+    },
+    {
+      "step": "features",
+      "status": "ok",
+      "seconds": 3.9,
+      "peak_rss_mb": 1230.3
+    },
+    {
+      "step": "labels",
+      "status": "ok",
+      "seconds": 230.1,
+      "peak_rss_mb": 1671.4
+    },
+    {
+      "step": "baselines",
+      "status": "ok",
+      "seconds": 2.8,
+      "peak_rss_mb": 1001.4
+    },
+    {
+      "step": "train",
+      "status": "ok",
+      "seconds": 412.9,
+      "peak_rss_mb": 3404.6
+    },
+    {
+      "step": "ensemble",
+      "status": "ok",
+      "seconds": 11.2,
+      "peak_rss_mb": 3129.9
+    },
+    {
+      "step": "stream",
+      "status": "ok",
+      "seconds": 84.3,
+      "peak_rss_mb": 1436.0
+    }
+  ],
+  "stopped": null,
+  "summary": {
+    "scale": "sp500",
+    "universe_file": "sp500.csv",
+    "completed": true,
+    "stopped_at": "",
+    "tickers_requested": 503,
+    "tickers_newly_downloaded": 402,
+    "tickers_failed_download": 1,
+    "tickers_passed_cleaning": 492,
+    "feature_rows": 1386906,
+    "download_seconds": 69.5,
+    "features_seconds": 3.9,
+    "labels_seconds": 230.1,
+    "train_seconds": 412.9,
+    "ensemble_seconds": 11.2,
+    "stream_seconds": 84.3,
+    "total_seconds": 814.7,
+    "peak_rss_mb": 3404.6,
+    "ensemble_weights": "baseline_zscore_rule 0.9, lstm_autoencoder 0.1",
+    "stream_bars": 277980,
+    "latency_p50_us": 209.8,
+    "latency_p95_us": 224.8,
+    "latency_p99_us": 267.6,
+    "false_alarms_per_day_all_tickers": 1.8920353982300886,
+    "false_alarms_per_ticker_month": 0.08075789897798034,
+    "test_pr_auc_synthetic": 0.319334,
+    "test_pr_auc_real": 0.711883,
+    "rule_test_pr_auc_synthetic": 0.302101,
+    "rule_test_pr_auc_real": 0.649758
+  }
+}

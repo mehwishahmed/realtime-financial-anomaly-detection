@@ -47,3 +47,22 @@ def test_bad_values_are_rejected(tmp_path, edit, message):
             load_config(path)
     finally:
         path.unlink()
+
+
+def test_extends_merges_on_top_of_the_base(tmp_path):
+    path = REPO_ROOT / "configs" / f"_test_extends_{tmp_path.name}.yaml"
+    path.write_text(
+        "extends: default.yaml\n"
+        "paths: {data_dir: data/x, results_dir: results/x, models_dir: models/x, raw_data_dir: data/raw}\n"
+        "universe: {max_tickers: null}\n"
+        "models: {deep: {max_train_windows: 5000}}\n"
+    )
+    try:
+        cfg = load_config(path)
+    finally:
+        path.unlink()
+    base = load_config("configs/default.yaml")
+    assert cfg.universe.max_tickers is None and cfg.universe.market_ticker == base.universe.market_ticker
+    assert cfg.paths.data_dir == REPO_ROOT / "data" / "x" and cfg.raw_dir("daily") == base.raw_dir("daily")
+    assert cfg.models.deep.max_train_windows == 5000 and cfg.models.deep.window == base.models.deep.window
+    assert cfg.models.isolation_forest == base.models.isolation_forest

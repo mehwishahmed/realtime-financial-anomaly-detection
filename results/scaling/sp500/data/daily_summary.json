@@ -1,0 +1,49 @@
+{
+  "frequency": "daily",
+  "interval": "1d",
+  "universe_file": "sp500.csv",
+  "seed": 42,
+  "assets": {
+    "selected": 503,
+    "with_cached_data": 502,
+    "passed_cleaning": 492,
+    "in_feature_table": 492
+  },
+  "rejected_by_reason": {
+    "insufficient_history": 7,
+    "too_many_zero_volume": 3
+  },
+  "rows": {
+    "total": 1386906,
+    "train": 925361,
+    "val": 183566,
+    "test": 277979
+  },
+  "filled_bars_in_clean_data": 1,
+  "split_boundaries": {
+    "train_end": "2022-12-31",
+    "val_end": "2024-06-30"
+  },
+  "split_ranges": {
+    "train": [
+      "2015-03-31 00:00:00",
+      "2022-12-30 00:00:00"
+    ],
+    "val": [
+      "2023-01-03 00:00:00",
+      "2024-06-28 00:00:00"
+    ],
+    "test": [
+      "2024-07-01 00:00:00",
+      "2026-09-30 00:00:00"
+    ]
+  },
+  "features": [
+    "log_ret",
+    "vol_20",
+    "volume_z",
+    "gap",
+    "corr_market"
+  ],
+  "seconds": 3.0
+}

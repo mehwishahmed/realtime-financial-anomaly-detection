@@ -34,9 +34,11 @@ class AnomalyModel(ABC):
         return df[["ticker", "timestamp"]].assign(score=self.score(df)).reset_index(drop=True)
 
     def save(self, path: Path) -> None:
+        """Pickle the fitted model (including scalers and weights) to ``path``."""
         path.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(self, path)
 
     @staticmethod
     def load(path: Path) -> "AnomalyModel":
+        """Load a model saved with :meth:`save`."""
         return joblib.load(path)

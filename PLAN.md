@@ -111,15 +111,14 @@ After each phase: run it, show the output, explain it in plain English, write te
 
 
 ## Progress (last updated 2026-10-19)
-**Done:** Step 0 and Phases 1-6. 81 tests pass.
+**Done:** Phases 1-6. Phase 7 is in progress. 88 tests pass.
 
-**Phase 6 outcome (`make stream`, results in `results/streaming/`):**
-- Daily replay of the test period (56,500 bars, 100 tickers), bar by bar from raw prices. Deployed ensemble latency is p50 240 µs / p95 301 µs / p99 401 µs per bar. False alarms: 0.46 per day across all tickers, 0.096 per ticker per month. Streamed scores equal batch scores (max diff 4.4e-5, 0 alarm disagreements).
-- Intraday replay: **latency only** (models are daily-trained). 92,664 five-minute bars, deployed p50 248 µs / p99 504 µs.
-- Isolation Forest is the slow member (~2.3 ms per single-bar call) but has zero weight in the deployed ensemble.
+**Phase 7 so far:**
+- `make all` (main pipeline end to end), config `extends:` for scale configs, a shared download cache (`paths.raw_data_dir`), chunked deep-model scoring, a seeded cap on LSTM training windows, docstrings and type hints throughout.
+- README restructured: architecture (Mermaid), `make all`, results, streaming, Scaling (generated table), Limitations, Future work.
+- Scaling runs (`scripts/run_scaling.py`, `configs/scale_*.yaml`, results in `results/scaling/`):
+  - 100 stocks: complete. It reproduces the main results exactly (weights 0.9/0.1, PR-AUC 0.320/0.735, 0.096 FA per ticker-month); 3.1 min, 1.3 GB peak.
+  - S&P 500: complete. 492 of 503 stocks handled, 1.39M bars, 13.6 min, 3.4 GB peak, p50 210 µs, 0.081 FA per ticker-month.
+  - All US-listed: running. Download done (5,367 new, 31 failed, 24 min); 4,304 of 5,900 passed cleaning (10.5M bars).
 
-**Next:** Phase 7 (polish).
-- README: Mermaid architecture diagram, setup, how to run each step, results, charts, limitations (move the notes below into it), and future work.
-- Docstrings and type hints everywhere; all tests passing.
-- `make all` to run the whole pipeline end to end.
-- Optionally a scaling run (e.g. the full S&P 500, then `us_all.csv`) to measure how many assets the pipeline handles, with the counts saved to results/.
+**Next:** let the all-US run finish (or stop and report), then `make results-table` to fill the README scaling table and write the scaling notes from the numbers. Final test run, commit, push.

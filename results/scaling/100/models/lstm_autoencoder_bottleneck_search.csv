@@ -1,0 +1,2 @@
+hidden_size,role,parameters,val_pr_auc_synthetic,val_pr_auc_real,val_copy_slope_ret_z,best_epoch,epochs_run,fit_seconds
+4,candidate,403,0.277354,0.716977,0.1384,99,100,151.0

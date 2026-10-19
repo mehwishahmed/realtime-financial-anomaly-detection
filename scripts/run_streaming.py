@@ -63,6 +63,7 @@ def main() -> None:
     summaries = []
 
     def new_scorer() -> StreamingScorer:
+        """A fresh scorer around the saved ensemble (fresh buffers for each run)."""
         ensemble = AnomalyModel.load(cfg.paths.models_dir / f"{sc.model}.joblib")
         return StreamingScorer(ensemble, threshold, sc.torch_threads)
 

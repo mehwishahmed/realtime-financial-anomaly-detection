@@ -16,6 +16,8 @@ EXTREME_LOG_MOVE = np.log(1.4)  # only counted in the report; big moves are what
 
 @dataclass
 class CleanResult:
+    """Cleaned bars plus a per-ticker report of what happened to each ticker."""
+
     data: pd.DataFrame  # long format: one row per (ticker, timestamp), CLEAN_COLUMNS
     report: pd.DataFrame  # one row per ticker: status, reason, and data-quality counts
 

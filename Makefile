@@ -1,10 +1,11 @@
 # Run each pipeline step. Override the config with: make features CONFIG=configs/other.yaml
+# `make all` reruns the main pipeline end to end from the cached ticker lists.
 PY := .venv/bin/python
 CONFIG ?= configs/default.yaml
 FREQ ?= all
 export PYTHONPATH := src
 
-.PHONY: universe data features phase1 labels baselines phase2 iforest deep ensemble stream results-table test
+.PHONY: all universe data features phase1 labels baselines phase2 iforest deep ensemble stream results-table scale-100 scale-sp500 scale-us-all test
 
 universe:   ## Refresh configs/tickers/sp500.csv and us_all.csv
 	$(PY) scripts/build_universe.py --config $(CONFIG) --which both
@@ -42,3 +43,14 @@ results-table:  ## Regenerate the README results table from results/metrics/summ
 
 stream:     ## Phase 6: tick-by-tick replay (daily: latency + detection; intraday: latency only)
 	$(PY) scripts/run_streaming.py --config $(CONFIG) --run all
+
+scale-100:  ## Scaling run: 100 stocks (deployed pipeline, daily)
+	$(PY) scripts/run_scaling.py --config configs/scale_100.yaml
+
+scale-sp500:  ## Scaling run: every S&P 500 stock
+	$(PY) scripts/run_scaling.py --config configs/scale_sp500.yaml
+
+scale-us-all:  ## Scaling run: every US-listed common stock (long; stops and reports if a step fails or times out)
+	$(PY) scripts/run_scaling.py --config configs/scale_us_all.yaml
+
+all: data features labels baselines iforest deep ensemble stream results-table test  ## The whole main pipeline, end to end

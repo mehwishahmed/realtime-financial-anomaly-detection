@@ -97,6 +97,7 @@ def main() -> None:
     d, m = cfg.models.deep, cfg.models
     track = cfg.evaluation.tune_track
 
+    (cfg.paths.results_dir / "models").mkdir(parents=True, exist_ok=True)
     labeled, events = load_labeled(cfg)
     labeled = add_derived_features(labeled, vol_col=f"vol_{cfg.features.vol_windows[0]}")
     evaluator = Evaluator(labeled, events, cfg.evaluation)
@@ -113,6 +114,7 @@ def main() -> None:
         holdout_frac=d.holdout_frac,
         seed=cfg.seed,
         torch_threads=d.torch_threads,
+        max_train_windows=d.max_train_windows,
     )
 
     if args.model in ("lstm_autoencoder", "all"):
@@ -153,11 +155,12 @@ def main() -> None:
         best = int(pool.sort_values([f"val_pr_auc_{track}", "hidden_size"], ascending=[False, True]).iloc[0]["hidden_size"])
         log.info("Selected bottleneck %d by val PR-AUC (%s); original was %d", best, track, original)
 
-        report_model(
-            cfg, "lstm_autoencoder_original", f"LSTM autoencoder, original (bottleneck {original}): training curves",
-            *fitted[original], labeled, evaluator,
-            {"hidden_size": original, "role": "original first-pass model, kept for comparison"},
-        )
+        if original != best or original not in candidates:  # don't report the same model twice
+            report_model(
+                cfg, "lstm_autoencoder_original", f"LSTM autoencoder, original (bottleneck {original}): training curves",
+                *fitted[original], labeled, evaluator,
+                {"hidden_size": original, "role": "original first-pass model, kept for comparison"},
+            )
         report_model(
             cfg, "lstm_autoencoder", f"LSTM autoencoder, selected (bottleneck {best}): training curves",
             *fitted[best], labeled, evaluator,

@@ -1,0 +1,61 @@
+{
+  "frequency": "daily",
+  "seed": 42,
+  "tickers": 492,
+  "earnings_dates": {
+    "tickers_with_dates": 492,
+    "tickers_without_dates": [],
+    "reaction_days_in_range": 22271
+  },
+  "events_planned": {
+    "synthetic": 2533,
+    "real": 8792
+  },
+  "events_kept": {
+    "synthetic": 2531,
+    "real": 8792
+  },
+  "events_by_split": {
+    "synthetic": {
+      "train": {},
+      "val": {
+        "level_shift": 352,
+        "price_spike": 334,
+        "volume_burst": 371
+      },
+      "test": {
+        "level_shift": 468,
+        "price_spike": 522,
+        "volume_burst": 484
+      }
+    },
+    "real": {
+      "train": {
+        "earnings_shock": 4731,
+        "large_move": 676
+      },
+      "val": {
+        "earnings_shock": 1201,
+        "large_move": 113
+      },
+      "test": {
+        "earnings_shock": 1675,
+        "large_move": 396
+      }
+    }
+  },
+  "anomalous_bar_rate": {
+    "synthetic": {
+      "train": 0.0,
+      "val": 0.015204,
+      "test": 0.013857
+    },
+    "real": {
+      "train": 0.005843,
+      "val": 0.007158,
+      "test": 0.00745
+    }
+  },
+  "rows": 1386906,
+  "seconds": 229.3
+}

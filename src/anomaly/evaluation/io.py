@@ -27,6 +27,7 @@ def scores_path(cfg: Config, model: str) -> Path:
 
 
 def save_scores(cfg: Config, model: str, scores: pd.DataFrame) -> Path:
+    """Write a model's per-row scores (ticker, timestamp, score) for later phases."""
     path = scores_path(cfg, model)
     path.parent.mkdir(parents=True, exist_ok=True)
     scores[["ticker", "timestamp", "score"]].to_parquet(path, index=False)

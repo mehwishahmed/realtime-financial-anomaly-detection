@@ -1,0 +1,29 @@
+{
+  "model": "lstm_autoencoder",
+  "features": [
+    "log_ret",
+    "vol_20",
+    "volume_z",
+    "gap",
+    "corr_market",
+    "ret_z",
+    "gap_z"
+  ],
+  "window": 20,
+  "hidden_size": 4,
+  "role": "tighter bottleneck chosen by best val PR-AUC on the synthetic track",
+  "candidates": [
+    4
+  ],
+  "parameters": 403,
+  "train_windows": 448134,
+  "holdout_windows": 51605,
+  "epochs_run": 100,
+  "best_epoch": 98,
+  "best_holdout_loss": 0.690653,
+  "fit_seconds": 399.7,
+  "score_seconds_all_rows": 5.0,
+  "rows_scored": 1377066,
+  "torch_threads": 4,
+  "seed": 42
+}

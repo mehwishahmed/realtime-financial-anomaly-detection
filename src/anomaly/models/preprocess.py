@@ -46,6 +46,7 @@ class FeatureScaler:
         return std.where(std > 1e-12, 1.0)
 
     def fit(self, train: pd.DataFrame, columns: list[str]) -> "FeatureScaler":
+        """Learn global and per-ticker mean/std from the train split."""
         self.columns = list(columns)
         data = train[["ticker", *self.columns]].dropna()
         self.global_mean = data[self.columns].mean()

@@ -1,0 +1,50 @@
+{
+  "frequency": "daily",
+  "interval": "1d",
+  "universe_file": "us_all.csv",
+  "seed": 42,
+  "assets": {
+    "selected": 5900,
+    "with_cached_data": 5869,
+    "passed_cleaning": 4304,
+    "in_feature_table": 4304
+  },
+  "rejected_by_reason": {
+    "too_many_zero_volume": 858,
+    "insufficient_history": 706,
+    "too_many_missing": 1
+  },
+  "rows": {
+    "total": 10480238,
+    "train": 6462438,
+    "val": 1588589,
+    "test": 2429211
+  },
+  "filled_bars_in_clean_data": 12,
+  "split_boundaries": {
+    "train_end": "2022-12-31",
+    "val_end": "2024-06-30"
+  },
+  "split_ranges": {
+    "train": [
+      "2015-03-31 00:00:00",
+      "2022-12-30 00:00:00"
+    ],
+    "val": [
+      "2023-01-03 00:00:00",
+      "2024-06-28 00:00:00"
+    ],
+    "test": [
+      "2024-07-01 00:00:00",
+      "2026-09-30 00:00:00"
+    ]
+  },
+  "features": [
+    "log_ret",
+    "vol_20",
+    "volume_z",
+    "gap",
+    "corr_market"
+  ],
+  "seconds": 34.5
+}

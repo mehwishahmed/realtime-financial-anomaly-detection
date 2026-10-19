@@ -16,13 +16,18 @@ class ConfigError(ValueError):
 
 @dataclass(frozen=True)
 class Paths:
+    """Where data, results, models, and the shared download cache live."""
+
     data_dir: Path
     results_dir: Path
     models_dir: Path
+    raw_data_dir: Path  # downloaded bars and earnings dates; can be shared between configs as a cache
 
 
 @dataclass(frozen=True)
 class UniverseConfig:
+    """Which tickers to use and the market benchmark."""
+
     file: Path
     max_tickers: int | None
     selection: Literal["random", "first"]
@@ -31,6 +36,8 @@ class UniverseConfig:
 
 @dataclass(frozen=True)
 class DownloadConfig:
+    """yfinance batching, retry, and caching settings."""
+
     batch_size: int
     max_retries: int
     backoff_seconds: float
@@ -51,6 +58,8 @@ class SplitConfig:
 
 @dataclass(frozen=True)
 class FrequencyConfig:
+    """One bar frequency (daily or intraday): download window, cleaning, and splits."""
+
     name: str
     enabled: bool
     interval: str
@@ -65,6 +74,8 @@ class FrequencyConfig:
 
 @dataclass(frozen=True)
 class CleaningConfig:
+    """Thresholds for rejecting tickers and repairing splits."""
+
     max_missing_frac: float
     max_zero_volume_frac: float
     split_tolerance: float
@@ -73,6 +84,8 @@ class CleaningConfig:
 
 @dataclass(frozen=True)
 class FeatureConfig:
+    """Rolling-window lengths for the features."""
+
     vol_windows: tuple[int, ...]
     volume_z_window: int
     volume_z_days: int
@@ -81,6 +94,8 @@ class FeatureConfig:
 
 @dataclass(frozen=True)
 class SyntheticConfig:
+    """How many synthetic anomalies to inject, where, and how big."""
+
     rate_per_1000_bars: float
     min_gap_bars: int
     vol_window: int
@@ -93,6 +108,8 @@ class SyntheticConfig:
 
 @dataclass(frozen=True)
 class RealEventConfig:
+    """Thresholds for tagging real events (earnings shocks, large moves)."""
+
     large_move_sigma: float
     large_move_min_abs: float
     earnings_sigma: float
@@ -102,6 +119,8 @@ class RealEventConfig:
 
 @dataclass(frozen=True)
 class LabelConfig:
+    """Label settings: which frequency, which splits get injections, and both event types."""
+
     frequency: str
     inject_splits: tuple[str, ...]
     synthetic: SyntheticConfig
@@ -110,6 +129,8 @@ class LabelConfig:
 
 @dataclass(frozen=True)
 class EvaluationConfig:
+    """How thresholds are tuned and how late an alarm may be."""
+
     grace_bars: int
     tune_track: Literal["synthetic", "real"]
     threshold_objective: Literal["f1", "fa_budget"]
@@ -118,6 +139,8 @@ class EvaluationConfig:
 
 @dataclass(frozen=True)
 class IsolationForestConfig:
+    """Isolation Forest grid and fixed settings."""
+
     grid: dict[str, tuple[Any, ...]]
     max_features: float
     n_jobs: int
@@ -125,6 +148,8 @@ class IsolationForestConfig:
 
 @dataclass(frozen=True)
 class DeepConfig:
+    """Shared settings for the LSTM autoencoder and Transformer forecaster."""
+
     feature_set: str
     window: int
     holdout_frac: float
@@ -135,10 +160,13 @@ class DeepConfig:
     torch_threads: int
     lstm_autoencoder: dict[str, Any]
     transformer: dict[str, Any]
+    max_train_windows: int | None = None  # seeded random sample of training windows, to bound memory at scale
 
 
 @dataclass(frozen=True)
 class EnsembleConfig:
+    """Ensemble members, normalizations to try, and the weight-grid step."""
+
     members: tuple[str, ...]
     normalizations: tuple[str, ...]
     weight_step: float
@@ -146,6 +174,8 @@ class EnsembleConfig:
 
 @dataclass(frozen=True)
 class ModelsConfig:
+    """Feature sets, scaling, and per-model settings."""
+
     feature_sets: dict[str, tuple[str, ...]]
     scaling: Literal["per_ticker", "global"]
     min_train_rows_per_ticker: int
@@ -156,6 +186,8 @@ class ModelsConfig:
 
 @dataclass(frozen=True)
 class StreamingConfig:
+    """Tick-by-tick replay settings."""
+
     model: str
     daily_split: str
     intraday_latency_only: bool
@@ -163,7 +195,16 @@ class StreamingConfig:
 
 
 @dataclass(frozen=True)
+class ScalingRunConfig:
+    """Limits for scripts/run_scaling.py."""
+
+    step_timeout_minutes: int
+
+
+@dataclass(frozen=True)
 class Config:
+    """The whole validated configuration, with resolved absolute paths."""
+
     seed: int
     root: Path
     paths: Paths
@@ -176,12 +217,18 @@ class Config:
     evaluation: EvaluationConfig | None = None
     models: ModelsConfig | None = None
     streaming: StreamingConfig | None = None
+    scaling: ScalingRunConfig | None = None
 
     def raw_dir(self, freq: str) -> Path:
         """Directory holding one cached parquet file per ticker for a frequency."""
-        return self.paths.data_dir / "raw" / freq
+        return self.paths.raw_data_dir / freq
+
+    def earnings_dir(self) -> Path:
+        """Cached earnings announcement times, one parquet file per ticker."""
+        return self.paths.raw_data_dir / "earnings"
 
     def processed_dir(self) -> Path:
+        """Directory for processed tables and model scores (not committed)."""
         return self.paths.data_dir / "processed"
 
 
@@ -238,6 +285,27 @@ def _parse_frequency(name: str, raw: dict[str, Any]) -> FrequencyConfig:
     return freq
 
 
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    out = dict(base)
+    for key, value in override.items():
+        out[key] = _deep_merge(out[key], value) if isinstance(value, dict) and isinstance(out.get(key), dict) else value
+    return out
+
+
+def _read_with_extends(path: Path, seen: tuple[Path, ...] = ()) -> dict[str, Any]:
+    """Read YAML, following ``extends: other.yaml`` (relative to this file) and merging this file on top."""
+    if path.resolve() in seen:
+        raise ConfigError(f"Config 'extends' loop at {path}")
+    raw = yaml.safe_load(path.read_text()) or {}
+    base_name = raw.pop("extends", None)
+    if base_name is None:
+        return raw
+    base_path = (path.parent / base_name).resolve()
+    if not base_path.exists():
+        raise ConfigError(f"{path.name} extends {base_name}, which doesn't exist")
+    return _deep_merge(_read_with_extends(base_path, (*seen, path.resolve())), raw)
+
+
 def load_config(path: str | Path = "configs/default.yaml") -> Config:
     """Read a YAML config file and return a validated :class:`Config`.
 
@@ -250,11 +318,14 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
         path = candidate if candidate.exists() else find_repo_root(Path(__file__).resolve()) / path
     if not path.exists():
         raise ConfigError(f"Config file not found: {path}")
-    raw = yaml.safe_load(path.read_text()) or {}
+    raw = _read_with_extends(path)
     root = find_repo_root(path.resolve().parent)
 
     p = _require(raw, "paths", "root")
-    paths = Paths(**{k: root / _require(p, k, "paths") for k in ("data_dir", "results_dir", "models_dir")})
+    paths = Paths(
+        **{k: root / _require(p, k, "paths") for k in ("data_dir", "results_dir", "models_dir")},
+        raw_data_dir=root / p["raw_data_dir"] if p.get("raw_data_dir") else root / p["data_dir"] / "raw",
+    )
 
     u = _require(raw, "universe", "root")
     universe = UniverseConfig(
@@ -330,6 +401,7 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
         evaluation=evaluation,
         models=models,
         streaming=streaming,
+        scaling=ScalingRunConfig(int(raw["scaling"].get("step_timeout_minutes", 120))) if "scaling" in raw else None,
     )
 
 
@@ -398,7 +470,10 @@ def _parse_deep(raw: dict[str, Any], sets: dict[str, tuple[str, ...]]) -> DeepCo
         torch_threads=int(raw.get("torch_threads", 4)),
         lstm_autoencoder=dict(_require(raw, "lstm_autoencoder", w)),
         transformer=dict(_require(raw, "transformer", w)),
+        max_train_windows=None if raw.get("max_train_windows") is None else int(raw["max_train_windows"]),
     )
+    if deep.max_train_windows is not None and deep.max_train_windows < 1000:
+        raise ConfigError(f"{w}.max_train_windows must be at least 1000 (or null for no cap)")
     if deep.feature_set not in sets:
         raise ConfigError(f"{w}.feature_set '{deep.feature_set}' is not one of {sorted(sets)}")
     if deep.window < 3 or not 0 < deep.holdout_frac < 0.5:

@@ -88,6 +88,7 @@ class StreamingScorer:
         return raw, timing
 
     def combine(self, raw: np.ndarray) -> float:
+        """Ensemble score from one bar's raw member scores."""
         return float(self.ensemble.combine_raw(raw[None, :])[0])
 
 
