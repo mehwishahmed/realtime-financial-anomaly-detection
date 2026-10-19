@@ -33,9 +33,18 @@ def test_pr_auc_perfect_and_random():
 
 
 def test_false_alarm_rates():
+    # 100 tickers x 21 trading days, 42 false alarms in total.
     out = m.false_alarm_rates(false_alarms=42, n_days=21, n_ticker_days=2100)
-    assert out["false_alarms_per_day"] == 2.0
-    assert out["false_alarms_per_ticker_month"] == pytest.approx(0.42)
+    assert out["false_alarms_per_day_all_tickers"] == 2.0  # 42 / 21 days, summed over all tickers
+    assert out["false_alarms_per_ticker_day"] == pytest.approx(0.02)  # 42 / 2100 ticker-days
+    assert out["false_alarms_per_ticker_month"] == pytest.approx(0.42)  # 0.02 x 21
+
+
+def test_per_ticker_rates_dont_depend_on_universe_size():
+    small = m.false_alarm_rates(false_alarms=10, n_days=20, n_ticker_days=100 * 20)
+    big = m.false_alarm_rates(false_alarms=50, n_days=20, n_ticker_days=500 * 20)  # 5x tickers, same behaviour
+    assert big["false_alarms_per_day_all_tickers"] == 5 * small["false_alarms_per_day_all_tickers"]
+    assert big["false_alarms_per_ticker_month"] == pytest.approx(small["false_alarms_per_ticker_month"])
 
 
 def test_event_detection_and_delay():

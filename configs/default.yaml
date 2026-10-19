@@ -81,4 +81,4 @@ evaluation:
   grace_bars: 3                     # an alarm up to 3 bars after an event still counts as catching it; these bars are never false alarms
   tune_track: synthetic             # thresholds are tuned on the val split of this label track
   threshold_objective: f1           # f1 | fa_budget
-  max_false_alarms_per_day: 1.0     # used when threshold_objective is fa_budget (universe-wide alarms per trading day)
+  max_false_alarms_per_day_all_tickers: 1.0  # fa_budget only: false alarms per trading day summed over ALL tickers

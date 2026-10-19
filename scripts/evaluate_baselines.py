@@ -53,9 +53,11 @@ def main() -> None:
             for track in TRACKS:
                 r = report["results"][split][track]
                 log.info(
-                    "  %-4s %-9s PR-AUC %.3f  P %.3f  R %.3f  F1 %.3f  event recall %.3f  delay %.2f  FA/day %.2f",
+                    "  %-4s %-9s PR-AUC %.3f  P %.3f  R %.3f  F1 %.3f  event recall %.3f  delay %.2f  "
+                    "FA/day (all tickers) %.2f  FA/ticker/month %.3f",
                     split, track, r["pr_auc"], r["precision"], r["recall"], r["f1"],
-                    r["event_recall"], r["mean_delay_bars"], r["false_alarms_per_day"],
+                    r["event_recall"], r["mean_delay_bars"], r["false_alarms_per_day_all_tickers"],
+                    r["false_alarms_per_ticker_month"],
                 )
 
 

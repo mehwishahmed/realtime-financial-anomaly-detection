@@ -33,11 +33,22 @@ def pr_auc(y: np.ndarray, score: np.ndarray) -> float:
 
 
 def false_alarm_rates(false_alarms: int, n_days: int, n_ticker_days: int, days_per_month: float = 21.0) -> dict[str, float]:
-    """False alarms per trading day (across the whole universe) and per ticker per month."""
+    """False-alarm rates, both universe-wide and per ticker.
+
+    - ``false_alarms_per_day_all_tickers``: total false alarms / trading days.
+      This is the alert volume a team watching the whole universe would see,
+      so it grows with the number of tickers.
+    - ``false_alarms_per_ticker_day``: total false alarms / (tickers x trading days),
+      counted as ticker-days (bars) actually in the split.
+    - ``false_alarms_per_ticker_month``: per ticker-day x ``days_per_month`` (21 trading days).
+      Doesn't depend on universe size, so it's the one to compare across runs.
+    """
+    per_ticker_day = false_alarms / n_ticker_days if n_ticker_days else float("nan")
     return {
         "false_alarms": int(false_alarms),
-        "false_alarms_per_day": false_alarms / n_days if n_days else float("nan"),
-        "false_alarms_per_ticker_month": false_alarms / (n_ticker_days / days_per_month) if n_ticker_days else float("nan"),
+        "false_alarms_per_day_all_tickers": false_alarms / n_days if n_days else float("nan"),
+        "false_alarms_per_ticker_day": per_ticker_day,
+        "false_alarms_per_ticker_month": per_ticker_day * days_per_month,
     }
 
 

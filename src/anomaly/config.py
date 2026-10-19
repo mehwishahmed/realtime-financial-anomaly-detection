@@ -113,7 +113,7 @@ class EvaluationConfig:
     grace_bars: int
     tune_track: Literal["synthetic", "real"]
     threshold_objective: Literal["f1", "fa_budget"]
-    max_false_alarms_per_day: float
+    max_false_alarms_per_day_all_tickers: float
 
 
 @dataclass(frozen=True)
@@ -317,12 +317,12 @@ def _parse_evaluation(raw: dict[str, Any]) -> EvaluationConfig:
         grace_bars=int(_require(raw, "grace_bars", "evaluation")),
         tune_track=_require(raw, "tune_track", "evaluation"),
         threshold_objective=_require(raw, "threshold_objective", "evaluation"),
-        max_false_alarms_per_day=float(_require(raw, "max_false_alarms_per_day", "evaluation")),
+        max_false_alarms_per_day_all_tickers=float(_require(raw, "max_false_alarms_per_day_all_tickers", "evaluation")),
     )
     if ev.tune_track not in ("synthetic", "real"):
         raise ConfigError("evaluation.tune_track must be 'synthetic' or 'real'")
     if ev.threshold_objective not in ("f1", "fa_budget"):
         raise ConfigError("evaluation.threshold_objective must be 'f1' or 'fa_budget'")
-    if ev.grace_bars < 0 or ev.max_false_alarms_per_day <= 0:
-        raise ConfigError("evaluation.grace_bars must be >= 0 and max_false_alarms_per_day > 0")
+    if ev.grace_bars < 0 or ev.max_false_alarms_per_day_all_tickers <= 0:
+        raise ConfigError("evaluation.grace_bars must be >= 0 and max_false_alarms_per_day_all_tickers > 0")
     return ev

@@ -70,7 +70,7 @@ class Evaluator:
             threshold, _ = m.best_f1_threshold(y, s[rows])
             return threshold
         n_days = int(self.labels.loc[in_split, "timestamp"].nunique())
-        return m.fa_budget_threshold(s[rows][~y], n_days, self.cfg.max_false_alarms_per_day)
+        return m.fa_budget_threshold(s[rows][~y], n_days, self.cfg.max_false_alarms_per_day_all_tickers)
 
     def evaluate(self, scores: pd.DataFrame, threshold: float, split: str, track: str) -> dict[str, Any]:
         """All metrics for one split and label track at a fixed threshold."""
@@ -84,7 +84,7 @@ class Evaluator:
         filled = np.where(scored, s, np.nanmin(s[scored]) - 1 if scored.any() else 0.0)
         point = m.point_metrics(y[counted], alarm[counted])
         n_days = int(lab.loc[in_split, "timestamp"].nunique())
-        fa = m.false_alarm_rates(point["fp"], n_days, int(in_split.sum()))
+        fa = m.false_alarm_rates(point["fp"], n_days, n_ticker_days=int(in_split.sum()))
 
         events = self.events[self.events["track"] == track]
         split_of_event = (
@@ -139,7 +139,8 @@ class Evaluator:
 
 SUMMARY_COLUMNS = [
     "model", "split", "track", "pr_auc", "precision", "recall", "f1", "event_recall",
-    "mean_delay_bars", "false_alarms_per_day", "false_alarms_per_ticker_month", "events", "coverage", "threshold",
+    "mean_delay_bars", "false_alarms", "false_alarms_per_day_all_tickers", "false_alarms_per_ticker_day",
+    "false_alarms_per_ticker_month", "events", "coverage", "threshold",
 ]
 
 

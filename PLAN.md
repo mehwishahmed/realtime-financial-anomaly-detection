@@ -98,19 +98,10 @@ After each phase: run it, show the output, explain it in plain English, write te
 
 
 ## Progress (last updated 2026-10-19)
-**Done and pushed:** Step 0 (setup), Phase 1 (data pipeline), Phase 2 (labels and evaluator). 48 tests pass. Run with `make phase1`, `make phase2`, `make test`.
+**Done and pushed:** Step 0 (setup), Phase 1 (data pipeline), Phase 2 (labels and evaluator), and the false-alarm metric clarification (README "How results are measured").
 
-**Stopped at:** the start of a small evaluator change requested before Phase 3. No code for it has been written yet.
-
-**Next, in order:**
-1. **Clarify the false-alarm metrics.** Today `false_alarms_per_day` counts false alarms across *all tickers combined* (total false alarms ÷ trading days). Rename it and add a per-ticker rate so the evaluator reports:
-   - `false_alarms_per_day_all_tickers`: total false alarms ÷ trading days
-   - `false_alarms_per_ticker_day`: total false alarms ÷ (tickers × trading days)
-   - `false_alarms_per_ticker_month`: per ticker-day × 21 (already reported)
-
-   Also rename the config key `evaluation.max_false_alarms_per_day` to `max_false_alarms_per_day_all_tickers`. Update `metrics.py`, `evaluator.py` (summary columns), `config.py`, `default.yaml`, `scripts/evaluate_baselines.py`, and the tests. Add the definitions to the README, then rerun `make baselines` and commit the updated `results/metrics/`.
-2. **Phase 3: Isolation Forest.** Planned approach:
-   - Add `models/base.py` (a shared fit/score interface) and a feature scaler fit on train only (per ticker, falling back to global stats).
-   - Optionally add volatility-normalized inputs (return ÷ prior volatility, gap ÷ prior volatility).
-   - Run a small grid search (feature set, `n_estimators`, `max_samples`), choosing by **val** PR-AUC only. Report test results with `Evaluator.run`.
-   - Save scores for every row to `data/processed/scores/` for the Phase 5 ensemble. The bar to beat is the z-score rule's test/synthetic PR-AUC of 0.303.
+**In progress:** Phase 3 (Isolation Forest). Plan:
+- Add `models/base.py` (a shared fit/score interface) and a feature scaler fit on train only (per ticker, falling back to global stats).
+- Optionally add volatility-normalized inputs.
+- Run a small grid search, choosing by **val** PR-AUC only. Report test results with `Evaluator.run`.
+- Save scores for every row to `data/processed/scores/` for the Phase 5 ensemble. The bar to beat is the z-score rule's test/synthetic PR-AUC of 0.303.

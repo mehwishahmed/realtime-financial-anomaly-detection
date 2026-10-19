@@ -60,7 +60,9 @@ def test_other_tracks_events_are_not_false_alarms(setup):
     assert syn["false_alarms"] == 1
     real = ev.evaluate(scores, threshold=0.5, split="test", track="real")
     assert real["event_recall"] == 1.0 and real["false_alarms"] == 1
-    assert syn["false_alarms_per_day"] == pytest.approx(1 / 20)
+    assert syn["false_alarms_per_day_all_tickers"] == pytest.approx(1 / 20)  # 1 false alarm over 20 test days
+    assert syn["false_alarms_per_ticker_day"] == pytest.approx(1 / 40)  # 2 tickers x 20 days
+    assert syn["false_alarms_per_ticker_month"] == pytest.approx(21 / 40)
 
 
 def test_unscored_rows_count_as_no_alarm(setup):
