@@ -1,0 +1,48 @@
+# Project Plan
+
+Working rules (honesty, constraints, teaching) are in [CLAUDE.md](CLAUDE.md).
+
+## Project
+Real-time anomaly detection across a large universe of financial assets, using an ensemble of Isolation Forest, an LSTM autoencoder, and a small Transformer, plus a streaming simulation that measures detection latency and false-alarm rate.
+
+## Step 0: Before writing any code
+1. Propose the full repo structure (folders, main files, what each does) and wait for approval.
+2. Set up the virtual environment, `requirements.txt`, `.gitignore` (ignore `data/`, caches, model files, `.venv`), and a basic README (with the rebuild note at the top). Commit.
+
+## Phases
+After each phase: run it, show the output, explain it in plain English, write tests, commit with a clear message, and give the interview explanation.
+
+### Phase 1: Data pipeline
+- Download daily and intraday price/volume data for a configurable ticker list (start with S&P 500 tickers).
+- Clean it: handle missing values, market holidays, splits, and tickers with bad data.
+- Features: log returns, rolling volatility, volume z-scores, price gaps, and rolling correlation to the market (SPY).
+- Use time-based train/validation/test splits only. No random shuffling, to avoid lookahead leakage.
+
+### Phase 2: Evaluation setup (build this BEFORE the models)
+- Create labeled anomalies two ways:
+  - (a) inject synthetic anomalies (price spikes, volume bursts, level shifts) at known timestamps
+  - (b) tag real known events (e.g., earnings-day shocks, large single-day moves)
+- Metrics: precision, recall, F1, PR-AUC, false alarms per day/month, and detection delay.
+- Write a small evaluation module that every model uses the same way.
+
+### Phase 3: Baseline: Isolation Forest
+- Train, tune the threshold on the validation set, and report results on the test set.
+
+### Phase 4: Deep models
+- LSTM autoencoder (reconstruction error as the anomaly score).
+- Small Transformer encoder (also reconstruction or forecast error).
+- Keep the models small enough to train on CPU in reasonable time. Show training curves.
+
+### Phase 5: Ensemble
+- Normalize each model's scores and combine them (start with a weighted average, tuned on validation).
+- Compare ensemble vs. each individual model in a results table.
+
+### Phase 6: Streaming simulation
+- Replay test data tick by tick as if it were live, scoring each new data point.
+- Measure per-tick latency (p50, p95, p99) and the false-alarm rate over the replay period.
+- Save all results to a `results/` folder (CSV + charts).
+
+### Phase 7: Polish
+- README with: the rebuild note, architecture diagram (Mermaid), setup instructions, how to run each step, a results table with our real numbers, charts, limitations, and future work.
+- Clean code with docstrings and type hints. All tests passing.
+- A simple command to run the whole pipeline end to end (Makefile or a single script).
