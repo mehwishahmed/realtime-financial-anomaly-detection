@@ -34,13 +34,18 @@ def split_boundaries(timestamps: pd.Series, cfg: SplitConfig) -> dict[str, pd.Ti
     return {"train_end": days[n_train - 1], "val_end": days[n_train + n_val - 1]}
 
 
-def assign_splits(df: pd.DataFrame, cfg: SplitConfig) -> tuple[pd.DataFrame, dict[str, pd.Timestamp]]:
-    """Add a ``split`` column (train / val / test) based only on each row's timestamp."""
-    bounds = split_boundaries(df["timestamp"], cfg)
+def apply_boundaries(df: pd.DataFrame, bounds: dict[str, pd.Timestamp]) -> pd.DataFrame:
+    """Add a ``split`` column using boundaries that were already computed."""
     day = _session_date(df["timestamp"])
     split = pd.Series("test", index=df.index)
     split[day <= bounds["val_end"]] = "val"
     split[day <= bounds["train_end"]] = "train"
     out = df.copy()
     out["split"] = pd.Categorical(split, categories=list(SPLITS))
-    return out, bounds
+    return out
+
+
+def assign_splits(df: pd.DataFrame, cfg: SplitConfig) -> tuple[pd.DataFrame, dict[str, pd.Timestamp]]:
+    """Add a ``split`` column (train / val / test) based only on each row's timestamp."""
+    bounds = split_boundaries(df["timestamp"], cfg)
+    return apply_boundaries(df, bounds), bounds

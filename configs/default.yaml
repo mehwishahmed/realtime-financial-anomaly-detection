@@ -56,3 +56,29 @@ features:
   volume_z_window: 20           # bars (rolling mode)
   volume_z_days: 10             # days (time_of_day mode)
   corr_window: 60               # rolling correlation to the market ticker
+
+# Phase 2: labeled anomalies. Built on daily data; intraday is used for the streaming test.
+labels:
+  frequency: daily
+  inject_splits: [val, test]        # train stays untouched; thresholds are tuned on val, results reported on test
+  synthetic:
+    rate_per_1000_bars: 2.0         # expected events per anomaly type, per ticker, per 1000 bars
+    min_gap_bars: 30                # spacing between events in one ticker, so their effects don't overlap
+    vol_window: 20                  # magnitudes are multiples of the ticker's trailing volatility
+    price_spike_sigma: [4.0, 10.0]  # one-bar jump, then back to normal
+    volume_burst_factor: [4.0, 12.0]
+    volume_burst_bars: [1, 3]
+    level_shift_sigma: [4.0, 8.0]   # price jumps and stays there
+    level_shift_label_bars: 5       # bars after the jump counted as part of the event
+  real:
+    large_move_sigma: 5.0           # |return| at least this many trailing-volatility units...
+    large_move_min_abs: 0.08        # ...and at least 8% (log return)
+    earnings_sigma: 3.0             # reaction-day |return| for an earnings day to count as a shock
+    earnings_limit: 100             # quarters of earnings dates to fetch per ticker
+    earnings_after_hour: 12         # announced at/after 12:00 ET, so the market reacts the next trading day
+
+evaluation:
+  grace_bars: 3                     # an alarm up to 3 bars after an event still counts as catching it; these bars are never false alarms
+  tune_track: synthetic             # thresholds are tuned on the val split of this label track
+  threshold_objective: f1           # f1 | fa_budget
+  max_false_alarms_per_day: 1.0     # used when threshold_objective is fa_budget (universe-wide alarms per trading day)

@@ -80,6 +80,43 @@ class FeatureConfig:
 
 
 @dataclass(frozen=True)
+class SyntheticConfig:
+    rate_per_1000_bars: float
+    min_gap_bars: int
+    vol_window: int
+    price_spike_sigma: tuple[float, float]
+    volume_burst_factor: tuple[float, float]
+    volume_burst_bars: tuple[int, int]
+    level_shift_sigma: tuple[float, float]
+    level_shift_label_bars: int
+
+
+@dataclass(frozen=True)
+class RealEventConfig:
+    large_move_sigma: float
+    large_move_min_abs: float
+    earnings_sigma: float
+    earnings_limit: int
+    earnings_after_hour: int
+
+
+@dataclass(frozen=True)
+class LabelConfig:
+    frequency: str
+    inject_splits: tuple[str, ...]
+    synthetic: SyntheticConfig
+    real: RealEventConfig
+
+
+@dataclass(frozen=True)
+class EvaluationConfig:
+    grace_bars: int
+    tune_track: Literal["synthetic", "real"]
+    threshold_objective: Literal["f1", "fa_budget"]
+    max_false_alarms_per_day: float
+
+
+@dataclass(frozen=True)
 class Config:
     seed: int
     root: Path
@@ -89,6 +126,8 @@ class Config:
     frequencies: dict[str, FrequencyConfig] = field(default_factory=dict)
     cleaning: CleaningConfig | None = None
     features: FeatureConfig | None = None
+    labels: LabelConfig | None = None
+    evaluation: EvaluationConfig | None = None
 
     def raw_dir(self, freq: str) -> Path:
         """Directory holding one cached parquet file per ticker for a frequency."""
@@ -215,6 +254,9 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
     if min((*features.vol_windows, features.volume_z_window, features.volume_z_days, features.corr_window)) < 2:
         raise ConfigError("feature windows must be at least 2")
 
+    labels = _parse_labels(raw["labels"], frequencies) if "labels" in raw else None
+    evaluation = _parse_evaluation(raw["evaluation"]) if "evaluation" in raw else None
+
     return Config(
         seed=int(raw.get("seed", 42)),
         root=root,
@@ -224,4 +266,63 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
         frequencies=frequencies,
         cleaning=cleaning,
         features=features,
+        labels=labels,
+        evaluation=evaluation,
     )
+
+
+def _pair(value: Any, where: str, cast: type = float) -> tuple[Any, Any]:
+    if not isinstance(value, (list, tuple)) or len(value) != 2 or cast(value[0]) > cast(value[1]):
+        raise ConfigError(f"{where} must be a [low, high] pair with low <= high")
+    return cast(value[0]), cast(value[1])
+
+
+def _parse_labels(raw: dict[str, Any], frequencies: dict[str, FrequencyConfig]) -> LabelConfig:
+    freq = str(_require(raw, "frequency", "labels"))
+    if freq not in frequencies:
+        raise ConfigError(f"labels.frequency '{freq}' is not one of {sorted(frequencies)}")
+    inject = tuple(_require(raw, "inject_splits", "labels"))
+    if not inject or not set(inject) <= {"train", "val", "test"}:
+        raise ConfigError("labels.inject_splits must be a non-empty subset of [train, val, test]")
+    s = _require(raw, "synthetic", "labels")
+    w = "labels.synthetic"
+    synthetic = SyntheticConfig(
+        rate_per_1000_bars=float(_require(s, "rate_per_1000_bars", w)),
+        min_gap_bars=int(_require(s, "min_gap_bars", w)),
+        vol_window=int(_require(s, "vol_window", w)),
+        price_spike_sigma=_pair(_require(s, "price_spike_sigma", w), f"{w}.price_spike_sigma"),
+        volume_burst_factor=_pair(_require(s, "volume_burst_factor", w), f"{w}.volume_burst_factor"),
+        volume_burst_bars=_pair(_require(s, "volume_burst_bars", w), f"{w}.volume_burst_bars", int),
+        level_shift_sigma=_pair(_require(s, "level_shift_sigma", w), f"{w}.level_shift_sigma"),
+        level_shift_label_bars=int(_require(s, "level_shift_label_bars", w)),
+    )
+    if synthetic.rate_per_1000_bars < 0 or synthetic.volume_burst_bars[0] < 1 or synthetic.level_shift_label_bars < 1:
+        raise ConfigError(f"{w}: rate must be >= 0 and event lengths >= 1")
+    longest = max(synthetic.volume_burst_bars[1], synthetic.level_shift_label_bars)
+    if synthetic.min_gap_bars <= longest:
+        raise ConfigError(f"{w}.min_gap_bars must be longer than the longest event ({longest} bars)")
+    r = _require(raw, "real", "labels")
+    real = RealEventConfig(
+        large_move_sigma=float(_require(r, "large_move_sigma", "labels.real")),
+        large_move_min_abs=float(_require(r, "large_move_min_abs", "labels.real")),
+        earnings_sigma=float(_require(r, "earnings_sigma", "labels.real")),
+        earnings_limit=int(_require(r, "earnings_limit", "labels.real")),
+        earnings_after_hour=int(_require(r, "earnings_after_hour", "labels.real")),
+    )
+    return LabelConfig(frequency=freq, inject_splits=inject, synthetic=synthetic, real=real)
+
+
+def _parse_evaluation(raw: dict[str, Any]) -> EvaluationConfig:
+    ev = EvaluationConfig(
+        grace_bars=int(_require(raw, "grace_bars", "evaluation")),
+        tune_track=_require(raw, "tune_track", "evaluation"),
+        threshold_objective=_require(raw, "threshold_objective", "evaluation"),
+        max_false_alarms_per_day=float(_require(raw, "max_false_alarms_per_day", "evaluation")),
+    )
+    if ev.tune_track not in ("synthetic", "real"):
+        raise ConfigError("evaluation.tune_track must be 'synthetic' or 'real'")
+    if ev.threshold_objective not in ("f1", "fa_budget"):
+        raise ConfigError("evaluation.threshold_objective must be 'f1' or 'fa_budget'")
+    if ev.grace_bars < 0 or ev.max_false_alarms_per_day <= 0:
+        raise ConfigError("evaluation.grace_bars must be >= 0 and max_false_alarms_per_day > 0")
+    return ev

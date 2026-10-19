@@ -30,6 +30,8 @@ All settings are in [`configs/default.yaml`](configs/default.yaml). Change `univ
 | `make universe` | Refresh the ticker lists in `configs/tickers/` (S&P 500 from Wikipedia, all US-listed from NASDAQ Trader) |
 | `make data` | Download daily and 5-minute bars from yfinance into a local parquet cache (batched, with retries) |
 | `make features` | Clean the data, build features, assign time-based splits, and write data-quality reports to `results/data/` |
+| `make labels` | Tag real events (earnings shocks, large moves), inject synthetic anomalies into val/test, write `results/labels/` |
+| `make baselines` | Sanity-check the evaluator with a random scorer and a simple z-score rule, write `results/metrics/` |
 | `make test` | Run the test suite |
 
 ## Project layout

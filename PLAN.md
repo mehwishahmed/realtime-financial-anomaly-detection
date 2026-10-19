@@ -22,13 +22,14 @@ realtime-financial-anomaly-detection/
 ├── src/anomaly/
 │   ├── config.py, utils.py    # Typed config loading; seeds, logging, paths, timing
 │   ├── data/                  # universe.py, download.py, clean.py, features.py, splits.py (Phase 1)
-│   ├── labels/                # synthetic.py, events.py (Phase 2)
-│   ├── evaluation/            # metrics.py, evaluator.py (Phase 2)
+│   ├── labels/                # synthetic.py, events.py, attach.py (Phase 2)
+│   ├── evaluation/            # metrics.py, evaluator.py, baselines.py (Phase 2)
 │   ├── models/                # base.py, windows.py, isolation_forest.py, lstm_autoencoder.py,
 │   │                          # transformer.py, ensemble.py (Phases 3–5)
 │   └── streaming/             # simulator.py (Phase 6)
 ├── scripts/                   # build_universe.py, download_data.py, build_features.py, make_labels.py,
-│                              # train_iforest.py, train_deep.py, run_ensemble.py, run_streaming.py
+│                              # evaluate_baselines.py, train_iforest.py, train_deep.py, run_ensemble.py,
+│                              # run_streaming.py
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Look at raw data, features, and labels
 │   └── 02_results.ipynb            # Visualize model results and streaming metrics
@@ -81,3 +82,17 @@ After each phase: run it, show the output, explain it in plain English, write te
 - README with: the rebuild note, architecture diagram (Mermaid), setup instructions, how to run each step, a results table with our real numbers, charts, limitations, and future work.
 - Clean code with docstrings and type hints. All tests passing.
 - A simple command to run the whole pipeline end to end (Makefile or a single script).
+
+## Decisions log
+- Python 3.12.7 instead of 3.11 (3.11 wasn't installed).
+- `PYTHONPATH=src` (Makefile, pytest config) instead of relying on the editable install: macOS hides `.pth` files in this iCloud-synced folder.
+- Evaluation and models use **daily** data (11 years, real earnings events). 5-minute data is used for the streaming latency test in Phase 6.
+- Synthetic anomalies are injected into val/test prices only (train is untouched), then features are recomputed.
+- Thresholds are tuned for best F1 on val/synthetic. Models are compared mainly on PR-AUC, and event recall is always read alongside false alarms per day.
+
+## Notes for the README's Limitations section
+- Survivorship bias: ticker lists are current snapshots, so stocks that left the index or delisted since 2015 are missing.
+- Intraday data is a ~60-day snapshot that depends on the download date (fetch dates are saved in `data/raw/intraday/_manifest.csv`).
+- `large_move` real events are defined by |return| / volatility, the same quantity some features measure, so detecting them is partly circular. `earnings_shock` is the fairer real-world test.
+- Event recall can be inflated by alarming constantly (the random baseline gets ~0.89 event recall at ~34 false alarms per day), so it's only meaningful next to the false-alarm rate.
+
