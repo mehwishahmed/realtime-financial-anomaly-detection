@@ -59,6 +59,19 @@ class Evaluator:
 
     # ----- public API -----
 
+    def align(self, scores: pd.DataFrame) -> np.ndarray:
+        """Scores as an array in the labeled table's row order (NaN where a row has no score)."""
+        return self._aligned_scores(scores)
+
+    def pr_auc_aligned(self, aligned: np.ndarray, split: str, track: str) -> float:
+        """PR-AUC from an already aligned score array. A fast path for searching many score combinations."""
+        _, counted = self._mask(split, track)
+        y = self.labels[f"{track}_label"].to_numpy()[counted]
+        s = aligned[counted]
+        finite = np.isfinite(s)
+        filled = np.where(finite, s, np.nanmin(s[finite]) - 1 if finite.any() else 0.0)
+        return m.pr_auc(y, filled)
+
     def tune_threshold(self, scores: pd.DataFrame, split: str = "val", track: str | None = None) -> float:
         """Pick the alarm threshold on ``split`` using the configured objective."""
         track = track or self.cfg.tune_track

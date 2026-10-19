@@ -117,3 +117,9 @@ models:
       n_layers: 2
       ff_dim: 64
       dropout: 0.1
+  ensemble:
+    members: [baseline_zscore_rule, isolation_forest, lstm_autoencoder, transformer]
+    normalizations: [robust_z, rank]  # statistics fit on each member's TRAIN-split scores
+    weight_step: 0.1                  # weights move in steps of 0.1 and sum to 1
+    # Selections, all on val: "ensemble" = best tune_track PR-AUC; "ensemble_balanced" = best mean of
+    # synthetic and real PR-AUC; "ensemble_equal" = equal weights with robust_z (untuned reference).

@@ -138,12 +138,20 @@ class DeepConfig:
 
 
 @dataclass(frozen=True)
+class EnsembleConfig:
+    members: tuple[str, ...]
+    normalizations: tuple[str, ...]
+    weight_step: float
+
+
+@dataclass(frozen=True)
 class ModelsConfig:
     feature_sets: dict[str, tuple[str, ...]]
     scaling: Literal["per_ticker", "global"]
     min_train_rows_per_ticker: int
     isolation_forest: IsolationForestConfig
     deep: DeepConfig | None = None
+    ensemble: EnsembleConfig | None = None
 
 
 @dataclass(frozen=True)
@@ -328,13 +336,32 @@ def _parse_models(raw: dict[str, Any]) -> ModelsConfig:
         n_jobs=int(f.get("n_jobs", -1)),
     )
     deep = _parse_deep(raw["deep"], sets) if "deep" in raw else None
+    ensemble = _parse_ensemble(raw["ensemble"]) if "ensemble" in raw else None
     return ModelsConfig(
         feature_sets=sets,
         scaling=scaling,
         min_train_rows_per_ticker=int(_require(raw, "min_train_rows_per_ticker", "models")),
         isolation_forest=iforest,
         deep=deep,
+        ensemble=ensemble,
     )
+
+
+def _parse_ensemble(raw: dict[str, Any]) -> EnsembleConfig:
+    w = "models.ensemble"
+    ens = EnsembleConfig(
+        members=tuple(_require(raw, "members", w)),
+        normalizations=tuple(_require(raw, "normalizations", w)),
+        weight_step=float(_require(raw, "weight_step", w)),
+    )
+    if len(ens.members) < 2 or len(set(ens.members)) != len(ens.members):
+        raise ConfigError(f"{w}.members needs at least two distinct models")
+    if not ens.normalizations or not set(ens.normalizations) <= {"robust_z", "rank"}:
+        raise ConfigError(f"{w}.normalizations must be a non-empty subset of [robust_z, rank]")
+    steps = 1 / ens.weight_step if ens.weight_step > 0 else 0
+    if not (0 < ens.weight_step <= 0.5) or abs(steps - round(steps)) > 1e-9:
+        raise ConfigError(f"{w}.weight_step must divide 1 evenly (e.g. 0.1, 0.25) and be <= 0.5")
+    return ens
 
 
 def _parse_deep(raw: dict[str, Any], sets: dict[str, tuple[str, ...]]) -> DeepConfig:
