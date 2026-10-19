@@ -1,0 +1,13 @@
+{
+  "frequency": "intraday",
+  "interval": "5m",
+  "universe_file": "sp500.csv",
+  "requested": 101,
+  "cached": 0,
+  "downloaded": 101,
+  "failed": 0,
+  "requests_made": 3,
+  "retries": 0,
+  "failed_tickers": [],
+  "seconds": 7.2
+}

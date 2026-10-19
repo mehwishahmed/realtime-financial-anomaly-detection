@@ -1,5 +1,5 @@
 # Pinned with: pip freeze (Python 3.12.7, macOS arm64, CPU-only)
-# Top-level libraries: numpy pandas pyarrow yfinance scikit-learn torch pyyaml matplotlib pytest ipykernel
+# Top-level libraries: numpy pandas pyarrow yfinance scikit-learn torch pyyaml matplotlib pytest ipykernel lxml
 # Regenerate after adding a library: pip install <lib> && pip freeze > requirements.txt
 appnope==1.0.0
 asttokens==3.0.2

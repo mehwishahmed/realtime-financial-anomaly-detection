@@ -1,0 +1,58 @@
+# Every project setting lives here. Paths are relative to the repo root.
+
+seed: 42
+
+paths:
+  data_dir: data            # raw/ and processed/ parquet cache (not committed)
+  results_dir: results      # CSVs, JSON, and charts behind reported numbers (committed)
+  models_dir: models        # saved model files (not committed)
+
+universe:
+  file: configs/tickers/sp500.csv   # or configs/tickers/us_all.csv to scale up
+  max_tickers: 100                  # null = use every ticker in the file
+  selection: random                 # random (seeded) | first
+  market_ticker: SPY                # benchmark for correlation features and the trading calendar
+
+download:
+  batch_size: 50                # tickers per yfinance request
+  max_retries: 3                # extra attempts per batch after the first
+  backoff_seconds: 5.0          # wait before retry k is backoff_seconds * 2**k
+  pause_between_batches: 2.0    # seconds, to stay under Yahoo's rate limits
+  timeout: 30                   # seconds per request
+  refresh: false                # true = re-download tickers that are already cached
+
+# Window lengths are in bars (one bar = one day for daily, five minutes for 5m data).
+frequencies:
+  daily:
+    enabled: true
+    interval: 1d
+    start: "2015-01-01"
+    end: "2026-10-01"           # exclusive; fixed so reruns see the same history
+    min_history_bars: 750       # ~3 years of trading days
+    max_ffill_bars: 3           # longest gap we fill by carrying the last price forward
+    volume_z_mode: rolling      # compare volume to the previous N bars
+    splits:
+      train_end: "2022-12-31"
+      val_end: "2024-06-30"     # test = everything after this date
+  intraday:
+    enabled: true
+    interval: 5m
+    period: 60d                 # Yahoo only serves ~60 days of 5-minute bars
+    min_history_bars: 1500      # ~19 trading days of 78 bars
+    max_ffill_bars: 6           # 30 minutes
+    volume_z_mode: time_of_day  # compare to the same 5-minute slot on previous days
+    splits:
+      train_frac: 0.6           # by trading day, so no day is split across sets
+      val_frac: 0.2
+
+cleaning:
+  max_missing_frac: 0.05        # drop a ticker missing more than 5% of trading bars
+  max_zero_volume_frac: 0.05    # drop a ticker with more than 5% zero-volume bars
+  split_tolerance: 0.05         # how close a split-day return must be to the split ratio to count as unadjusted
+  min_split_ratio: 1.5          # only check real splits (>= 3:2 or <= 2:3); small ratios are stock dividends Yahoo already adjusts
+
+features:
+  vol_windows: [20]             # rolling volatility of log returns
+  volume_z_window: 20           # bars (rolling mode)
+  volume_z_days: 10             # days (time_of_day mode)
+  corr_window: 60               # rolling correlation to the market ticker

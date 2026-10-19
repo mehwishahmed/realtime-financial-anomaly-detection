@@ -19,6 +19,19 @@ pip install -r requirements.txt
 pip install -e . --no-deps
 ```
 
+The Makefile sets `PYTHONPATH=src`, so `make` commands work even if the editable install doesn't. (On macOS, files under an iCloud-synced Documents folder can be marked hidden, and Python 3.12 skips hidden `.pth` files.) To run a script by hand, use `PYTHONPATH=src python scripts/...`.
+
+## Running the pipeline
+
+All settings are in [`configs/default.yaml`](configs/default.yaml). Change `universe.file` and `universe.max_tickers` to scale from ~100 tickers up to the full S&P 500 or all US-listed stocks.
+
+| Command | What it does |
+|---|---|
+| `make universe` | Refresh the ticker lists in `configs/tickers/` (S&P 500 from Wikipedia, all US-listed from NASDAQ Trader) |
+| `make data` | Download daily and 5-minute bars from yfinance into a local parquet cache (batched, with retries) |
+| `make features` | Clean the data, build features, assign time-based splits, and write data-quality reports to `results/data/` |
+| `make test` | Run the test suite |
+
 ## Project layout
 
 | Path | What's there |

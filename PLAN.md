@@ -21,7 +21,7 @@ realtime-financial-anomaly-detection/
 │       └── us_all.csv         # Larger universe: all US-listed stocks, for scaling tests
 ├── src/anomaly/
 │   ├── config.py, utils.py    # Typed config loading; seeds, logging, paths, timing
-│   ├── data/                  # download.py, clean.py, features.py, splits.py (Phase 1)
+│   ├── data/                  # universe.py, download.py, clean.py, features.py, splits.py (Phase 1)
 │   ├── labels/                # synthetic.py, events.py (Phase 2)
 │   ├── evaluation/            # metrics.py, evaluator.py (Phase 2)
 │   ├── models/                # base.py, windows.py, isolation_forest.py, lstm_autoencoder.py,
