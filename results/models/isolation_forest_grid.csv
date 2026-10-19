@@ -1,0 +1,9 @@
+feature_set,n_estimators,max_samples,val_pr_auc_synthetic,val_pr_auc_real,fit_seconds,score_seconds_val
+base_plus_normalized,100,2048,0.234602,0.759779,0.23,0.07
+base_plus_normalized,300,2048,0.231953,0.770881,0.56,0.2
+base_plus_normalized,100,256,0.177954,0.798122,0.11,0.06
+base_plus_normalized,300,256,0.167696,0.792029,0.24,0.17
+base,100,2048,0.166722,0.509897,0.22,0.07
+base,300,2048,0.163025,0.52036,0.56,0.21
+base,100,256,0.123509,0.625832,0.12,0.06
+base,300,256,0.117521,0.640124,0.22,0.17

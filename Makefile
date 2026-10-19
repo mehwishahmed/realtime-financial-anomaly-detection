@@ -4,7 +4,7 @@ CONFIG ?= configs/default.yaml
 FREQ ?= all
 export PYTHONPATH := src
 
-.PHONY: universe data features phase1 labels baselines phase2 test
+.PHONY: universe data features phase1 labels baselines phase2 iforest test
 
 universe:   ## Refresh configs/tickers/sp500.csv and us_all.csv
 	$(PY) scripts/build_universe.py --config $(CONFIG) --which both
@@ -27,3 +27,6 @@ baselines:  ## Phase 2: sanity-check the evaluator with random and z-score score
 	$(PY) scripts/evaluate_baselines.py --config $(CONFIG)
 
 phase2: labels baselines
+
+iforest:    ## Phase 3: tune Isolation Forest on val, report on test
+	$(PY) scripts/train_iforest.py --config $(CONFIG)

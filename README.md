@@ -32,6 +32,7 @@ All settings are in [`configs/default.yaml`](configs/default.yaml). Change `univ
 | `make features` | Clean the data, build features, assign time-based splits, and write data-quality reports to `results/data/` |
 | `make labels` | Tag real events (earnings shocks, large moves), inject synthetic anomalies into val/test, write `results/labels/` |
 | `make baselines` | Sanity-check the evaluator with a random scorer and a simple z-score rule, write `results/metrics/` |
+| `make iforest` | Phase 3: grid-search Isolation Forest on validation, report on test, write `results/models/` and `results/metrics/` |
 | `make test` | Run the test suite |
 
 ## How results are measured

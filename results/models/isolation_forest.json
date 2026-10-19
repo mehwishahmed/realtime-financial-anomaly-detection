@@ -1,0 +1,27 @@
+{
+  "model": "isolation_forest",
+  "chosen_by": "best val PR-AUC on the synthetic track",
+  "params": {
+    "feature_set": "base_plus_normalized",
+    "n_estimators": 100,
+    "max_samples": 2048
+  },
+  "features": [
+    "log_ret",
+    "vol_20",
+    "volume_z",
+    "gap",
+    "corr_market",
+    "ret_z",
+    "gap_z"
+  ],
+  "scaling": "per_ticker",
+  "train_rows": 189141,
+  "tickers_using_global_scaling": [
+    "GEHC"
+  ],
+  "fit_seconds": 0.22,
+  "score_seconds_all_rows": 0.52,
+  "rows_scored": 282991,
+  "seed": 42
+}

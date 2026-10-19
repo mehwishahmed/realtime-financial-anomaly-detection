@@ -117,6 +117,21 @@ class EvaluationConfig:
 
 
 @dataclass(frozen=True)
+class IsolationForestConfig:
+    grid: dict[str, tuple[Any, ...]]
+    max_features: float
+    n_jobs: int
+
+
+@dataclass(frozen=True)
+class ModelsConfig:
+    feature_sets: dict[str, tuple[str, ...]]
+    scaling: Literal["per_ticker", "global"]
+    min_train_rows_per_ticker: int
+    isolation_forest: IsolationForestConfig
+
+
+@dataclass(frozen=True)
 class Config:
     seed: int
     root: Path
@@ -128,6 +143,7 @@ class Config:
     features: FeatureConfig | None = None
     labels: LabelConfig | None = None
     evaluation: EvaluationConfig | None = None
+    models: ModelsConfig | None = None
 
     def raw_dir(self, freq: str) -> Path:
         """Directory holding one cached parquet file per ticker for a frequency."""
@@ -256,6 +272,7 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
 
     labels = _parse_labels(raw["labels"], frequencies) if "labels" in raw else None
     evaluation = _parse_evaluation(raw["evaluation"]) if "evaluation" in raw else None
+    models = _parse_models(raw["models"]) if "models" in raw else None
 
     return Config(
         seed=int(raw.get("seed", 42)),
@@ -268,6 +285,38 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
         features=features,
         labels=labels,
         evaluation=evaluation,
+        models=models,
+    )
+
+
+DERIVED_FEATURES = ("ret_z", "gap_z")
+
+
+def _parse_models(raw: dict[str, Any]) -> ModelsConfig:
+    sets = {name: tuple(cols) for name, cols in _require(raw, "feature_sets", "models").items()}
+    if not sets or any(not cols for cols in sets.values()):
+        raise ConfigError("models.feature_sets must name at least one non-empty feature list")
+    scaling = _require(raw, "scaling", "models")
+    if scaling not in ("per_ticker", "global"):
+        raise ConfigError("models.scaling must be 'per_ticker' or 'global'")
+    f = _require(raw, "isolation_forest", "models")
+    grid = {k: tuple(v) for k, v in _require(f, "grid", "models.isolation_forest").items()}
+    allowed = {"feature_set", "n_estimators", "max_samples"}
+    if set(grid) != allowed or any(not v for v in grid.values()):
+        raise ConfigError(f"models.isolation_forest.grid needs non-empty lists for exactly {sorted(allowed)}")
+    unknown = set(grid["feature_set"]) - set(sets)
+    if unknown:
+        raise ConfigError(f"models.isolation_forest.grid.feature_set has unknown sets: {sorted(unknown)}")
+    iforest = IsolationForestConfig(
+        grid=grid,
+        max_features=float(f.get("max_features", 1.0)),
+        n_jobs=int(f.get("n_jobs", -1)),
+    )
+    return ModelsConfig(
+        feature_sets=sets,
+        scaling=scaling,
+        min_train_rows_per_ticker=int(_require(raw, "min_train_rows_per_ticker", "models")),
+        isolation_forest=iforest,
     )
 
 

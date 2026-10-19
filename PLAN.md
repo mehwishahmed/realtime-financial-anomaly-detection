@@ -89,19 +89,21 @@ After each phase: run it, show the output, explain it in plain English, write te
 - Evaluation and models use **daily** data (11 years, real earnings events). 5-minute data is used for the streaming latency test in Phase 6.
 - Synthetic anomalies are injected into val/test prices only (train is untouched), then features are recomputed.
 - Thresholds are tuned for best F1 on val/synthetic. Models are compared mainly on PR-AUC, and event recall is always read alongside false alarms per day.
+- False alarms are reported three ways: per day across all tickers, per ticker-day, and per ticker per month (the last one is comparable across universe sizes).
+- Model inputs are standardized per ticker using train-split statistics only. Tickers with fewer than 250 train rows use global statistics.
+- Isolation Forest settings were chosen by val PR-AUC. After seeing its test results we deliberately did NOT add new feature sets, because that would tune on test.
 
 ## Notes for the README's Limitations section
 - Survivorship bias: ticker lists are current snapshots, so stocks that left the index or delisted since 2015 are missing.
 - Intraday data is a ~60-day snapshot that depends on the download date (fetch dates are saved in `data/raw/intraday/_manifest.csv`).
 - `large_move` real events are defined by |return| / volatility, the same quantity some features measure, so detecting them is partly circular. `earnings_shock` is the fairer real-world test.
+- Isolation Forest scores saturate beyond the training range (a 100-sigma move scores the same as a ~3-sigma one), so it misses most one-feature anomalies such as volume bursts.
 - Event recall can be inflated by alarming constantly (the random baseline gets ~0.89 event recall at ~34 false alarms per day), so it's only meaningful next to the false-alarm rate.
 
 
 ## Progress (last updated 2026-10-19)
-**Done and pushed:** Step 0 (setup), Phase 1 (data pipeline), Phase 2 (labels and evaluator), and the false-alarm metric clarification (README "How results are measured").
+**Done:** Step 0, Phase 1 (data), Phase 2 (labels and evaluator), the false-alarm metric clarification, and Phase 3 (Isolation Forest). 57 tests pass.
 
-**In progress:** Phase 3 (Isolation Forest). Plan:
-- Add `models/base.py` (a shared fit/score interface) and a feature scaler fit on train only (per ticker, falling back to global stats).
-- Optionally add volatility-normalized inputs.
-- Run a small grid search, choosing by **val** PR-AUC only. Report test results with `Evaluator.run`.
-- Save scores for every row to `data/processed/scores/` for the Phase 5 ensemble. The bar to beat is the z-score rule's test/synthetic PR-AUC of 0.303.
+**Phase 3 result (test, 100 tickers):** Isolation Forest PR-AUC is 0.218 synthetic / 0.714 real, vs. the z-score rule's 0.303 / 0.654, with 0.44 vs. 0.11 false alarms per ticker per month. On val it catches 100% of price spikes and level shifts but only 21% of volume bursts, because its scores saturate beyond the training range and one-feature anomalies get diluted.
+
+**Next:** Phase 4, the deep models (LSTM autoencoder, small Transformer) on daily windows. Train on CPU, show training curves (load the `dataviz` skill before making charts), and use the same `AnomalyModel` interface, scaler, and `Evaluator.run`. Then Phase 5: consider including the z-score rule as an ensemble member, since it covers Isolation Forest's volume blind spot. Decide this on val only.

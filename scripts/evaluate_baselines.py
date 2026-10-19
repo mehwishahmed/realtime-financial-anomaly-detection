@@ -9,24 +9,12 @@ from __future__ import annotations
 
 import argparse
 
-import pandas as pd
-
 from anomaly.config import load_config
 from anomaly.evaluation.baselines import random_scores, zscore_rule_scores
 from anomaly.evaluation.evaluator import Evaluator, save_report
+from anomaly.evaluation.io import load_labeled
 from anomaly.labels.attach import TRACKS
 from anomaly.utils import get_logger, set_seed
-
-
-def load_labeled(cfg) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """The labeled feature table and the events table that the evaluator needs."""
-    assert cfg.labels is not None
-    labeled = pd.read_parquet(cfg.processed_dir() / f"{cfg.labels.frequency}_labeled.parquet")
-    events = pd.concat(
-        [pd.read_csv(cfg.paths.results_dir / "labels" / f"{t}_events.csv", parse_dates=["start", "end"]) for t in TRACKS],
-        ignore_index=True,
-    )
-    return labeled, events
 
 
 def main() -> None:

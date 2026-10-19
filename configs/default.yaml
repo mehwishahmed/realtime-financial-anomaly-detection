@@ -82,3 +82,19 @@ evaluation:
   tune_track: synthetic             # thresholds are tuned on the val split of this label track
   threshold_objective: f1           # f1 | fa_budget
   max_false_alarms_per_day_all_tickers: 1.0  # fa_budget only: false alarms per trading day summed over ALL tickers
+
+# Phases 3-5: models. Every model trains on the train split and is tuned on val only.
+models:
+  feature_sets:
+    base: [log_ret, vol_20, volume_z, gap, corr_market]
+    # ret_z / gap_z = return / gap divided by the previous bar's vol_20 ("how many sigmas")
+    base_plus_normalized: [log_ret, vol_20, volume_z, gap, corr_market, ret_z, gap_z]
+  scaling: per_ticker               # per_ticker | global; statistics come from the train split only
+  min_train_rows_per_ticker: 250    # tickers with fewer train rows use global statistics
+  isolation_forest:
+    grid:                           # every combination is tried; the best val PR-AUC wins
+      feature_set: [base, base_plus_normalized]
+      n_estimators: [100, 300]
+      max_samples: [256, 2048]
+    max_features: 1.0
+    n_jobs: -1
