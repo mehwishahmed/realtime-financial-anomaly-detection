@@ -1,0 +1,17 @@
+run,stage,bars,mean_us,p50_us,p95_us,p99_us,max_us
+daily,features,56500,24.42,23.38,30.38,38.88,421.25
+daily,baseline_zscore_rule,56500,1.99,1.92,2.38,2.83,122.5
+daily,isolation_forest,56500,2359.55,2326.67,2550.17,2945.33,46373.29
+daily,lstm_autoencoder,56500,207.55,198.58,248.88,331.0,17228.25
+daily,transformer,56500,150.84,146.08,172.71,209.46,3839.96
+daily,combine,56500,16.92,15.67,21.54,28.71,244.71
+daily,deployed_total,56500,250.88,240.25,301.33,400.75,17287.04
+daily,all_members_total,56500,2761.28,2716.4,3025.17,3526.84,46911.46
+intraday (latency only),features,92468,30.19,28.17,39.42,55.58,753.58
+intraday (latency only),baseline_zscore_rule,92468,2.06,1.96,2.5,3.25,91.67
+intraday (latency only),isolation_forest,92468,2394.39,2339.0,2628.5,3365.43,123121.17
+intraday (latency only),lstm_autoencoder,92468,214.0,200.83,267.21,405.33,19865.67
+intraday (latency only),transformer,92468,154.02,147.21,180.33,250.83,7587.54
+intraday (latency only),combine,92468,17.28,15.79,23.21,34.89,785.08
+intraday (latency only),deployed_total,92468,263.52,247.54,331.92,503.99,19988.79
+intraday (latency only),all_members_total,92468,2811.94,2737.5,3151.29,4102.52,123864.63

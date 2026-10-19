@@ -123,3 +123,10 @@ models:
     weight_step: 0.1                  # weights move in steps of 0.1 and sum to 1
     # Selections, all on val: "ensemble" = best tune_track PR-AUC; "ensemble_balanced" = best mean of
     # synthetic and real PR-AUC; "ensemble_equal" = equal weights with robust_z (untuned reference).
+
+# Phase 6: tick-by-tick replay through the full real-time path (features -> members -> ensemble -> alarm).
+streaming:
+  model: ensemble                   # the ensemble whose threshold decides alarms
+  daily_split: test                 # replayed bar by bar; earlier bars only warm up the buffers (untimed)
+  intraday_latency_only: true       # 5-minute test bars, timed only; models are daily-trained, so no detection metrics
+  torch_threads: 1                  # one-bar-at-a-time inference is fastest single-threaded

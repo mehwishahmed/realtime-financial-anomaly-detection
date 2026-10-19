@@ -34,6 +34,8 @@ All settings are in [`configs/default.yaml`](configs/default.yaml). Change `univ
 | `make baselines` | Sanity-check the evaluator with a random scorer and a simple z-score rule, write `results/metrics/` |
 | `make iforest` | Phase 3: grid-search Isolation Forest on validation, report on test, write `results/models/` and `results/metrics/` |
 | `make deep` | Phase 4: train the LSTM autoencoder and Transformer forecaster on CPU, save training curves to `results/charts/`, evaluate |
+| `make stream` | Phase 6: tick-by-tick replay. Daily test period: latency + detection. Intraday: **latency only** |
+| `make results-table` | Regenerate the README results table from `results/metrics/summary.csv` |
 | `make test` | Run the test suite |
 
 ## How results are measured
@@ -73,6 +75,30 @@ A false alarm is an alarm on a bar that isn't part of any event. Alarms in the 3
 **About the two LSTM rows.** The original LSTM autoencoder (bottleneck 32) partly *copied* large moves through its bottleneck: on validation it rebuilt ~78% of a big return at the bar it scores, which hid exactly the anomalies it should flag. A search over tighter bottlenecks (4, 8, 16), selected by **validation** PR-AUC only, picked 4 (403 parameters). Copying dropped to ~14%, and both rows are reported. The full search table is in [`results/models/lstm_autoencoder_bottleneck_search.csv`](results/models/lstm_autoencoder_bottleneck_search.csv); the original had slightly higher validation PR-AUC on synthetic anomalies (0.286 vs 0.277) but far lower on real events (0.217 vs 0.717). Training curves are in [`results/charts/`](results/charts/).
 
 **About the ensembles.** Each member's scores are put on a common scale using statistics from its train-split scores, then averaged with weights searched on validation in steps of 0.1 ([`results/models/ensemble_search.csv`](results/models/ensemble_search.csv), chosen weights in [`results/models/ensembles.json`](results/models/ensembles.json)). The ensemble tuned on synthetic anomalies is 90% z-score rule and 10% LSTM autoencoder (robust z-scores). The one tuned on both label tracks is 60% rule, 30% Isolation Forest, and 10% LSTM (percentile ranks). Nearby weightings score within 0.01 on validation, so the robust finding is "mostly the rule, plus a small share of a learned model".
+
+## Streaming simulation
+
+`make stream` replays data **one bar at a time** through the same path a live system would use: raw prices go in, features are updated incrementally from small per-ticker buffers, the bar is scored by each ensemble member, the scores are combined, and an alarm fires if the score crosses the threshold tuned on validation. Every stage is timed per bar. Numbers come from [`results/streaming/`](results/streaming/). Hardware: a laptop CPU, single-threaded inference.
+
+### Daily replay: latency and detection (the main result)
+The test period (2024-07-01 to 2026-09-30: 565 trading days, 100 tickers, 56,500 bars), replayed bar by bar with the tuned ensemble (90% z-score rule + 10% LSTM autoencoder).
+
+| Stage (per bar) | p50 (µs) | p95 (µs) | p99 (µs) |
+|---|---|---|---|
+| Incremental features | 23 | 30 | 39 |
+| **Deployed ensemble, end to end** | **240** | **301** | **401** |
+| All four members (incl. zero-weight ones) | 2,716 | 3,025 | 3,527 |
+
+- **False alarms during the replay:** 258 in total, which is **0.46 per trading day across all tickers**, or **0.096 per ticker per month**. Monthly counts are in [`daily_alarms_by_month.csv`](results/streaming/daily_alarms_by_month.csv).
+- **Detection during the replay:** event recall 0.863 (synthetic) / 0.760 (real), mean detection delay 0.06 / 0.00 bars after the event starts.
+- **Streaming equals batch:** across 56,500 test bars, the largest difference between streamed and batch ensemble scores is 4.4e-05, with **0 alarm disagreements**. The streaming path can only see past bars, so this match also confirms the batch pipeline has no lookahead.
+- **Bottleneck:** Isolation Forest costs ~2,327 µs per single-bar call (scikit-learn per-call overhead). It has zero weight in the deployed ensemble, so it isn't on the live path.
+
+![Per-bar latency](results/charts/streaming_latency.png)
+![False alarms per month](results/charts/streaming_false_alarms_by_month.png)
+
+### Intraday replay: ⚠️ latency-only check
+**This run measures speed only. It does not measure detection quality.** The models were trained on *daily* features, so their scores on 5-minute bars aren't meaningful anomaly detections, and no detection or false-alarm numbers are reported for it. It shows the same real-time path keeps up at 5-minute cadence: 92,664 bars (99 tickers, 12 trading days, 2026-10-01 to 2026-10-16), deployed ensemble **p50 248 µs, p95 332 µs, p99 504 µs** per bar. That's far below the 5-minute bar interval. Details are in [`intraday_latency_only.json`](results/streaming/intraday_latency_only.json).
 
 ## Project layout
 

@@ -4,7 +4,7 @@ CONFIG ?= configs/default.yaml
 FREQ ?= all
 export PYTHONPATH := src
 
-.PHONY: universe data features phase1 labels baselines phase2 iforest deep ensemble results-table test
+.PHONY: universe data features phase1 labels baselines phase2 iforest deep ensemble stream results-table test
 
 universe:   ## Refresh configs/tickers/sp500.csv and us_all.csv
 	$(PY) scripts/build_universe.py --config $(CONFIG) --which both
@@ -39,3 +39,6 @@ ensemble:   ## Phase 5: search ensemble weights on val, report on test
 
 results-table:  ## Regenerate the README results table from results/metrics/summary.csv
 	$(PY) scripts/results_table.py --config $(CONFIG)
+
+stream:     ## Phase 6: tick-by-tick replay (daily: latency + detection; intraday: latency only)
+	$(PY) scripts/run_streaming.py --config $(CONFIG) --run all

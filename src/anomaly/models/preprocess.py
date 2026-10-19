@@ -72,6 +72,14 @@ class FeatureScaler:
             mean[known], std[known] = t_mean[known], t_std[known]
         return ((x - mean) / std).astype("float32")
 
+    def params_for(self, ticker: str) -> tuple[np.ndarray, np.ndarray]:
+        """(mean, std) used for one ticker. This is the fast path for scaling one bar at a time."""
+        if self.global_mean is None or self.global_std is None:
+            raise RuntimeError("FeatureScaler used before fit")
+        if self.mode == "per_ticker" and self.ticker_mean is not None and ticker in self.ticker_mean.index:
+            return self.ticker_mean.loc[ticker].to_numpy(dtype="float64"), self.ticker_std.loc[ticker].to_numpy(dtype="float64")
+        return self.global_mean.to_numpy(dtype="float64"), self.global_std.to_numpy(dtype="float64")
+
     def fallback_tickers(self, df: pd.DataFrame) -> list[str]:
         """Tickers in ``df`` that are scaled with global rather than their own statistics."""
         if self.mode != "per_ticker" or self.ticker_mean is None:

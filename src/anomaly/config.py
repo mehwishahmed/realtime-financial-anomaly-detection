@@ -155,6 +155,14 @@ class ModelsConfig:
 
 
 @dataclass(frozen=True)
+class StreamingConfig:
+    model: str
+    daily_split: str
+    intraday_latency_only: bool
+    torch_threads: int
+
+
+@dataclass(frozen=True)
 class Config:
     seed: int
     root: Path
@@ -167,6 +175,7 @@ class Config:
     labels: LabelConfig | None = None
     evaluation: EvaluationConfig | None = None
     models: ModelsConfig | None = None
+    streaming: StreamingConfig | None = None
 
     def raw_dir(self, freq: str) -> Path:
         """Directory holding one cached parquet file per ticker for a frequency."""
@@ -296,6 +305,17 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
     labels = _parse_labels(raw["labels"], frequencies) if "labels" in raw else None
     evaluation = _parse_evaluation(raw["evaluation"]) if "evaluation" in raw else None
     models = _parse_models(raw["models"]) if "models" in raw else None
+    streaming = None
+    if "streaming" in raw:
+        st = raw["streaming"]
+        streaming = StreamingConfig(
+            model=str(_require(st, "model", "streaming")),
+            daily_split=str(_require(st, "daily_split", "streaming")),
+            intraday_latency_only=bool(st.get("intraday_latency_only", True)),
+            torch_threads=int(st.get("torch_threads", 1)),
+        )
+        if streaming.daily_split not in ("val", "test"):
+            raise ConfigError("streaming.daily_split must be 'val' or 'test'")
 
     return Config(
         seed=int(raw.get("seed", 42)),
@@ -309,6 +329,7 @@ def load_config(path: str | Path = "configs/default.yaml") -> Config:
         labels=labels,
         evaluation=evaluation,
         models=models,
+        streaming=streaming,
     )
 
 

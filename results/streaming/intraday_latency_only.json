@@ -1,0 +1,22 @@
+{
+  "run": "intraday",
+  "latency_only": true,
+  "why": "The models were trained on daily features. Their scores on 5-minute bars are not meaningful detections, so no detection or false-alarm metrics are reported for this run.",
+  "interval": "5m",
+  "period": [
+    "2026-10-01 09:30:00-04:00",
+    "2026-10-16 15:55:00-04:00"
+  ],
+  "trading_days": 12,
+  "tickers": 99,
+  "bars_timed": 92664,
+  "bars_scored": 92468,
+  "replay_wall_seconds_incl_warmup": 268.9,
+  "deployed_latency_us": {
+    "p50_us": 247.5,
+    "p95_us": 331.9,
+    "p99_us": 504.0,
+    "mean_us": 263.5
+  },
+  "throughput_bars_per_second_deployed": 3795.0
+}

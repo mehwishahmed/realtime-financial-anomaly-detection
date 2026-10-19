@@ -4,6 +4,8 @@
 
 Outputs:
     data/processed/<freq>_labeled.parquet     features + split + label columns (not committed)
+    data/processed/<freq>_bars_injected.parquet   cleaned bars (incl. market ticker) after injection;
+                                                  the streaming replay starts from these (not committed)
     results/labels/synthetic_events.csv       every injected anomaly: where, what type, how big
     results/labels/real_events.csv            every tagged real event
     results/labels/summary.json               event counts and anomaly rates per split
@@ -65,6 +67,7 @@ def main() -> None:
         rng = np.random.default_rng(cfg.seed)
         planned = plan_events(clean, eligible, cfg.labels.synthetic, rng, blocked=blocked)
         injected = inject(clean.drop(columns="split"), planned)
+        injected.to_parquet(cfg.processed_dir() / f"{freq.name}_bars_injected.parquet", index=False)
 
         features = build_features(injected, market, freq, cfg.features)
         features = apply_boundaries(features, bounds)
